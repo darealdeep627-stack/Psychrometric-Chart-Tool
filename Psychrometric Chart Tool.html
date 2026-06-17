@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psychrometric Lab — Interactive Thermodynamics</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=DM+Sans:wght@300..700&family=JetBrains+Mono:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{--bg:#0a0908;--surface:#15120f;--elevated:#1f1b16;--border:#3a322a;--text:#f5efe6;--muted:#a39b8e;--amber:#f0a050;--amber-bright:#fbbf24;--teal:#5eead4;--cyan:#67e8f9;--orange:#fb923c;--green:#86efac;--danger:#ef5e5e;--pink:#f472b6}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  .font-display{font-family:'Fraunces',serif;font-optical-sizing:auto}
+  .font-mono{font-family:'JetBrains Mono',monospace}
+  .grain::before{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.5 0 0 0 0 0.4 0 0 0 0.4 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");opacity:.06;z-index:1;mix-blend-mode:overlay}
+  .hero-bg{position:absolute;inset:0;overflow:hidden;z-index:0}
+  .hero-bg::before,.hero-bg::after{content:'';position:absolute;border-radius:50%;filter:blur(80px);opacity:.25;animation:float 18s ease-in-out infinite}
+  .hero-bg::before{width:500px;height:500px;background:radial-gradient(circle,var(--amber) 0%,transparent 70%);top:-10%;left:-10%}
+  .hero-bg::after{width:600px;height:600px;background:radial-gradient(circle,var(--teal) 0%,transparent 70%);bottom:-20%;right:-10%;animation-delay:-9s}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.1)}}
+  .nav-link{position:relative;color:var(--muted);transition:color .2s}
+  .nav-link:hover{color:var(--text)}
+  .nav-link::after{content:'';position:absolute;left:0;bottom:-4px;width:0;height:2px;background:var(--amber-bright);transition:width .3s}
+  .nav-link:hover::after{width:100%}
+  .card{background:linear-gradient(180deg,var(--elevated) 0%,var(--surface) 100%);border:1px solid var(--border);border-radius:12px;transition:all .3s}
+  .card-hover:hover{border-color:var(--amber);transform:translateY(-2px);box-shadow:0 8px 30px -8px rgba(240,160,80,.15)}
+  .input-field{background:rgba(10,9,8,.6);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;width:100%;transition:all .2s}
+  .input-field:focus{outline:none;border-color:var(--amber-bright);box-shadow:0 0 0 3px rgba(251,191,36,.15)}
+  .input-field:hover{border-color:var(--amber)}
+  .btn{padding:10px 18px;border-radius:8px;font-weight:600;font-size:14px;transition:all .2s;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;gap:8px}
+  .btn-primary{background:var(--amber-bright);color:#0a0908}
+  .btn-primary:hover{background:#fcd34d;transform:translateY(-1px);box-shadow:0 6px 20px -6px rgba(251,191,36,.5)}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--text)}
+  .btn-ghost:hover{border-color:var(--amber);background:rgba(240,160,80,.08)}
+  .property-pill{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(10,9,8,.5);border-left:3px solid var(--amber);border-radius:6px;transition:all .3s}
+  .property-pill:hover{background:rgba(240,160,80,.08);transform:translateX(2px)}
+  .property-pill .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+  .property-pill .value{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);font-weight:600}
+  .section-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(94,234,212,.08);border:1px solid rgba(94,234,212,.2);border-radius:999px;color:var(--teal);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+  .concept-card{position:relative;overflow:hidden}
+  .concept-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);transform:translateX(-100%);transition:transform .6s}
+  .concept-card:hover::before{transform:translateX(100%)}
+  .chart-container{position:relative;background:linear-gradient(180deg,#1a1612 0%,#15120f 100%);border:1px solid var(--border);border-radius:12px;padding:8px}
+  #psychChart,#processChart{display:block;width:100%;aspect-ratio:4/3;cursor:crosshair}
+  .difficulty-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .diff-basic{background:rgba(134,239,172,.15);color:var(--green)}
+  .diff-intermediate{background:rgba(251,191,36,.15);color:var(--amber-bright)}
+  .diff-advanced{background:rgba(239,94,94,.15);color:var(--danger)}
+  .toast{position:fixed;bottom:30px;right:30px;padding:14px 20px;border-radius:10px;background:var(--elevated);border:1px solid var(--border);color:var(--text);z-index:1000;transform:translateX(120%);transition:transform .4s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:12px;box-shadow:0 10px 40px -10px rgba(0,0,0,.5);max-width:380px}
+  .toast.show{transform:translateX(0)}
+  .toast.success{border-color:var(--green)}
+  .toast.error{border-color:var(--danger)}
+  .toast.info{border-color:var(--amber-bright)}
+  .tab-btn{padding:8px 16px;border-radius:8px;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:1px solid transparent;background:transparent}
+  .tab-btn.active{background:rgba(240,160,80,.1);color:var(--amber-bright);border-color:rgba(240,160,80,.3)}
+  .tab-btn:hover:not(.active){color:var(--text);background:rgba(255,255,255,.03)}
+  .reveal{opacity:0;transform:translateY(20px);transition:opacity .8s,transform .8s}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--amber)}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.4)}50%{box-shadow:0 0 0 8px rgba(251,191,36,0)}}
+  .pulse-glow{animation:pulse-glow 2s infinite}
+  ::selection{background:var(--amber-bright);color:var(--bg)}
+  .legend-dot{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:8px;vertical-align:middle}
+  .legend-line{display:inline-block;width:12px;height:0;border-top:2px solid;margin-right:8px;vertical-align:middle}
+  .formula{font-family:'JetBrains Mono',monospace;background:rgba(10,9,8,.6);border:1px solid var(--border);border-radius:6px;padding:12px 16px;color:var(--amber-bright);font-size:13px;overflow-x:auto}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body class="grain">
+
+<header class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md" style="background:rgba(10,9,8,.7);border-bottom:1px solid var(--border)">
+  <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,var(--amber) 0%,var(--amber-bright) 100%)">
+        <i class="fa-solid fa-temperature-half" style="color:var(--bg)"></i>
+      </div>
+      <div>
+        <div class="font-display text-lg font-bold leading-none">Psychrometric Lab</div>
+        <div class="text-xs" style="color:var(--muted)">Interactive Thermodynamics</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <a href="#tutorial" class="nav-link">Tutorial</a>
+      <a href="#chart" class="nav-link">Interactive Chart</a>
+      <a href="#process" class="nav-link">Process Analysis</a>
+      <a href="#problems" class="nav-link">Problem Solving</a>
+      <a href="#chart" class="btn btn-primary text-sm">Launch Tool</a>
+    </div>
+    <button class="md:hidden text-xl" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </nav>
+  <div id="mobile-menu" class="hidden md:hidden px-6 pb-4" style="background:var(--surface)">
+    <a href="#tutorial" class="block py-2 nav-link">Tutorial</a>
+    <a href="#chart" class="block py-2 nav-link">Interactive Chart</a>
+    <a href="#process" class="block py-2 nav-link">Process Analysis</a>
+    <a href="#problems" class="block py-2 nav-link">Problem Solving</a>
+  </div>
+</header>
+
+<section id="top" class="relative pt-32 pb-20 px-6 overflow-hidden">
+  <div class="hero-bg"></div>
+  <div class="max-w-7xl mx-auto relative z-10">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <div>
+        <div class="section-eyebrow mb-6">
+          <i class="fa-solid fa-flask"></i> SEA-LEVEL · 101.325 kPa
+        </div>
+        <h1 class="font-display text-6xl md:text-7xl font-black leading-[0.95] tracking-tight mb-6">
+          Master the<br>
+          <span style="color:var(--amber-bright);font-style:italic;font-weight:300">psychrometric</span><br>chart.
+        </h1>
+        <p class="text-lg leading-relaxed mb-8" style="color:var(--muted);max-width:540px">
+          A complete learning environment for moist-air thermodynamics. Plot any two properties, analyze HVAC processes from state to state, and work through a curated library of problems.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <a href="#chart" class="btn btn-primary"><i class="fa-solid fa-play"></i> Open Interactive Chart</a>
+          <a href="#tutorial" class="btn btn-ghost"><i class="fa-solid fa-book-open"></i> Start Tutorial</a>
+        </div>
+        <div class="grid grid-cols-3 gap-6 mt-12 pt-8 border-t" style="border-color:var(--border)">
+          <div><div class="font-display text-3xl font-bold" style="color:var(--amber-bright)">7</div><div class="text-xs uppercase tracking-wider" style="color:var(--muted)">Air Properties</div></div>
+          <div><div class="font-display text-3xl font-bold" style="color:var(--teal)">10+</div><div class="text-xs uppercase tracking-wider" style="color:var(--muted)">Worked Problems</div></div>
+          <div><div class="font-display text-3xl font-bold" style="color:var(--green)">2</div><div class="text-xs uppercase tracking-wider" style="color:var(--muted)">State Process Tool</div></div>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="chart-container" style="aspect-ratio:4/3">
+          <canvas id="heroChart" style="width:100%;height:100%;display:block"></canvas>
+        </div>
+        <div class="absolute -top-4 -right-4 px-4 py-2 rounded-lg text-xs font-mono pulse-glow" style="background:var(--elevated);border:1px solid var(--amber-bright);color:var(--amber-bright)">LIVE PREVIEW</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tutorial" class="py-24 px-6 relative" style="background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 50%,var(--bg) 100%)">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16 reveal">
+      <div class="section-eyebrow mb-4"><i class="fa-solid fa-graduation-cap"></i> Tutorial</div>
+      <h2 class="font-display text-5xl md:text-6xl font-black mb-4">Learn the fundamentals.</h2>
+      <p class="text-lg max-w-2xl mx-auto" style="color:var(--muted)">Psychrometrics is the study of the thermodynamic properties of moist air. Master these seven properties and you can analyze any HVAC process.</p>
+    </div>
+
+    <div class="card p-8 md:p-12 mb-12 reveal">
+      <div class="grid md:grid-cols-3 gap-8 items-start">
+        <div class="md:col-span-1">
+          <div class="text-5xl mb-4" style="color:var(--amber-bright)"><i class="fa-solid fa-wind"></i></div>
+          <h3 class="font-display text-2xl font-bold mb-3">What is Psychrometrics?</h3>
+          <p class="text-sm" style="color:var(--muted)">The science of moist air — a binary mixture of dry air and water vapor at atmospheric pressure.</p>
+        </div>
+        <div class="md:col-span-2 space-y-4 text-sm leading-relaxed">
+          <p>Atmospheric air is never completely dry. It contains varying amounts of water vapor — typically 0.005 to 0.030 kg per kg of dry air. Even though this moisture seems small, it carries enormous amounts of latent heat and drives weather, comfort, and HVAC design.</p>
+          <p>The psychrometric chart is a graphical representation of these properties at a fixed pressure (usually sea level, 101.325 kPa). Once you can read it, you can solve complex air-conditioning problems visually — finding energy costs, condensation points, and required equipment capacities in seconds.</p>
+          <div class="formula mt-4">P<sub>atm</sub> = P<sub>da</sub> + P<sub>w</sub> &nbsp;&nbsp;(Dalton's Law)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-16">
+      <h3 class="font-display text-3xl font-bold mb-2">The Seven Properties</h3>
+      <p class="mb-8" style="color:var(--muted)">Each property is interrelated — given any two, the rest are determined.</p>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5" id="propertiesGrid"></div>
+    </div>
+
+    <div class="card p-8 md:p-12 mb-12 reveal">
+      <h3 class="font-display text-3xl font-bold mb-2">Reading the Chart</h3>
+      <p class="mb-8" style="color:var(--muted)">The psychrometric chart packs seven properties onto a single 2D plot. Here's how to decode it.</p>
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="space-y-5">
+          <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(251,191,36,.15);color:var(--amber-bright)">1</div><div><div class="font-semibold mb-1">Horizontal axis — Dry-bulb temperature</div><div class="text-sm" style="color:var(--muted)">The "regular" air temperature measured by a thermometer. Increases left to right.</div></div></div>
+          <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(94,234,212,.15);color:var(--teal)">2</div><div><div class="font-semibold mb-1">Vertical axis — Humidity ratio</div><div class="text-sm" style="color:var(--muted)">Mass of water vapor per kg of dry air. Increases bottom to top.</div></div></div>
+          <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(251,146,60,.15);color:var(--orange)">3</div><div><div class="font-semibold mb-1">Curved boundary — Saturation line</div><div class="text-sm" style="color:var(--muted)">The upper-left curve is 100% RH. All possible air states lie below it.</div></div></div>
+          <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(134,239,172,.15);color:var(--green)">4</div><div><div class="font-semibold mb-1">Diagonal lines — Wet-bulb & enthalpy</div><div class="text-sm" style="color:var(--muted)">Lines sloping down-right are constant wet-bulb (and nearly constant enthalpy).</div></div></div>
+        </div>
+        <div>
+          <div class="chart-container" style="aspect-ratio:1/1"><canvas id="tutorialChart" style="width:100%;height:100%;display:block"></canvas></div>
+          <div class="text-xs mt-3 text-center" style="color:var(--muted)">Annotated chart showing each property's geometry.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <h3 class="font-display text-3xl font-bold mb-2">Common Processes</h3>
+      <p class="mb-8" style="color:var(--muted)">HVAC systems move air across the chart along predictable paths.</p>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card card-hover p-5"><div class="text-2xl mb-2" style="color:var(--orange)"><i class="fa-solid fa-fire"></i></div><div class="font-semibold mb-1">Sensible Heating</div><div class="text-xs mb-2" style="color:var(--muted)">Horizontal right</div><div class="font-mono text-xs" style="color:var(--amber)">W constant, DBT↑</div></div>
+        <div class="card card-hover p-5"><div class="text-2xl mb-2" style="color:var(--cyan)"><i class="fa-solid fa-snowflake"></i></div><div class="font-semibold mb-1">Cooling & Dehum.</div><div class="text-xs mb-2" style="color:var(--muted)">Down-left to saturation, then along it</div><div class="font-mono text-xs" style="color:var(--amber)">DBT↓, W↓</div></div>
+        <div class="card card-hover p-5"><div class="text-2xl mb-2" style="color:var(--teal)"><i class="fa-solid fa-droplet"></i></div><div class="font-semibold mb-1">Humidification</div><div class="text-xs mb-2" style="color:var(--muted)">Vertical up</div><div class="font-mono text-xs" style="color:var(--amber)">DBT const, W↑</div></div>
+        <div class="card card-hover p-5"><div class="text-2xl mb-2" style="color:var(--green)"><i class="fa-solid fa-arrows-down-to-line"></i></div><div class="font-semibold mb-1">Evap. Cooling</div><div class="text-xs mb-2" style="color:var(--muted)">Along constant WBT</div><div class="font-mono text-xs" style="color:var(--amber)">WBT const</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="chart" class="py-24 px-6 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-12 reveal">
+      <div class="section-eyebrow mb-4"><i class="fa-solid fa-microscope"></i> Live Tool</div>
+      <h2 class="font-display text-5xl md:text-6xl font-black mb-4">Interactive Chart</h2>
+      <p class="text-lg max-w-2xl" style="color:var(--muted)">Select any two known properties. The chart updates in real time, highlighting every related line and revealing all remaining state values.</p>
+    </div>
+
+    <div class="grid lg:grid-cols-[1fr_360px] gap-6">
+      <div class="card p-4">
+        <div class="flex flex-wrap items-center justify-between mb-3 px-2 gap-3">
+          <div class="flex items-center gap-3 text-sm">
+            <span style="color:var(--muted)">Pressure:</span><span class="font-mono" style="color:var(--amber-bright)">101.325 kPa</span>
+            <span class="opacity-30">|</span>
+            <span style="color:var(--muted)">Elevation:</span><span class="font-mono">Sea Level</span>
+          </div>
+          <div class="flex items-center gap-2 text-xs flex-wrap" style="color:var(--muted)">
+            <span><span class="legend-line" style="border-color:var(--amber-bright)"></span>Saturation</span>
+            <span><span class="legend-line" style="border-color:var(--teal)"></span>RH curves</span>
+            <span><span class="legend-line" style="border-color:var(--cyan)"></span>WBT</span>
+            <span><span class="legend-line" style="border-color:var(--orange)"></span>Enthalpy</span>
+            <span><span class="legend-line" style="border-color:var(--green)"></span>Spec. vol.</span>
+          </div>
+        </div>
+        <div class="chart-container"><canvas id="psychChart"></canvas></div>
+        <div class="mt-3 px-2 text-xs flex items-center justify-between" style="color:var(--muted)">
+          <span><i class="fa-solid fa-hand-pointer mr-1"></i> Click anywhere on the chart to set the state point</span>
+          <span id="cursorInfo" class="font-mono">—</span>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+        <div class="card p-5">
+          <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--muted)">Known Properties</div>
+          <select id="inputMode" class="input-field">
+            <option value="DBT_RH">Dry-Bulb Temp + Relative Humidity</option>
+            <option value="DBT_WBT">Dry-Bulb Temp + Wet-Bulb Temp</option>
+            <option value="DBT_W">Dry-Bulb Temp + Humidity Ratio</option>
+            <option value="DBT_DPT">Dry-Bulb Temp + Dew Point Temp</option>
+            <option value="DBT_h">Dry-Bulb Temp + Enthalpy</option>
+          </select>
+          <div id="inputFields" class="mt-4 space-y-3"></div>
+          <div class="flex gap-2 mt-4">
+            <button id="resetBtn" class="btn btn-ghost flex-1 justify-center text-xs"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+            <button id="randomBtn" class="btn btn-ghost flex-1 justify-center text-xs"><i class="fa-solid fa-dice"></i> Random</button>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xs uppercase tracking-wider" style="color:var(--muted)">Air Properties</div>
+            <div class="text-xs font-mono" style="color:var(--amber-bright)" id="statusBadge">— Computing —</div>
+          </div>
+          <div class="space-y-2" id="resultsList"></div>
+        </div>
+
+        <div class="card p-5">
+          <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--muted)">Quick Presets</div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button class="preset-btn btn btn-ghost justify-center" data-dbt="25" data-rh="50">25°C, 50% RH</button>
+            <button class="preset-btn btn btn-ghost justify-center" data-dbt="35" data-rh="20">35°C, 20% RH</button>
+            <button class="preset-btn btn btn-ghost justify-center" data-dbt="20" data-wbt="15">20°C DBT, 15°C WBT</button>
+            <button class="preset-btn btn btn-ghost justify-center" data-dbt="30" data-rh="70">30°C, 70% RH</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="process" class="py-24 px-6 relative" style="background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-12 reveal">
+      <div class="section-eyebrow mb-4"><i class="fa-solid fa-diagram-project"></i> Process Analysis</div>
+      <h2 class="font-display text-5xl md:text-6xl font-black mb-4">State 1 to State 2</h2>
+      <p class="text-lg max-w-2xl" style="color:var(--muted)">Input two states to visualize the thermodynamic process on the chart and calculate the required sensible and latent heat transfers.</p>
+    </div>
+
+    <div class="grid lg:grid-cols-[1fr_360px] gap-6">
+      <div class="card p-4">
+        <div class="flex flex-wrap items-center justify-between mb-3 px-2 gap-3">
+          <div class="flex items-center gap-3 text-sm">
+            <span class="font-mono" style="color:var(--cyan)">● State 1</span>
+            <span class="font-mono" style="color:var(--orange)">● State 2</span>
+            <span class="font-mono" style="color:var(--pink)">— Process Line</span>
+          </div>
+        </div>
+        <div class="chart-container"><canvas id="processChart"></canvas></div>
+        <div class="mt-3 px-2 text-xs flex items-center justify-between" style="color:var(--muted)">
+          <span><i class="fa-solid fa-circle-info mr-1"></i> The straight line represents the theoretical path between states.</span>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+        <div class="card p-5">
+          <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--cyan)">State 1 (Entering)</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs block mb-1" style="color:var(--muted)">DBT (°C)</label>
+              <input id="p_dbt1" type="number" class="input-field" value="30" step="0.1">
+            </div>
+            <div>
+              <label class="text-xs block mb-1" style="color:var(--muted)">RH (%)</label>
+              <input id="p_rh1" type="number" class="input-field" value="60" step="1">
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--orange)">State 2 (Leaving)</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs block mb-1" style="color:var(--muted)">DBT (°C)</label>
+              <input id="p_dbt2" type="number" class="input-field" value="15" step="0.1">
+            </div>
+            <div>
+              <label class="text-xs block mb-1" style="color:var(--muted)">RH (%)</label>
+              <input id="p_rh2" type="number" class="input-field" value="90" step="1">
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xs uppercase tracking-wider" style="color:var(--muted)">Process Results</div>
+            <div class="text-xs font-mono" style="color:var(--pink)" id="procStatus">Per kg dry air</div>
+          </div>
+          <div class="space-y-2" id="processResults"></div>
+        </div>
+        
+        <div class="card p-5">
+          <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--muted)">Process Presets</div>
+          <div class="grid grid-cols-1 gap-2 text-xs">
+            <button class="btn btn-ghost justify-center" onclick="setProcess(30, 70, 20, 50)">Sensible Cooling</button>
+            <button class="btn btn-ghost justify-center" onclick="setProcess(10, 50, 25, 25)">Heating & Humidifying</button>
+            <button class="btn btn-ghost justify-center" onclick="setProcess(35, 20, 25, 70)">Evaporative Cooling</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="problems" class="py-24 px-6 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-12 reveal">
+      <div class="section-eyebrow mb-4"><i class="fa-solid fa-pen-ruler"></i> Practice Library</div>
+      <h2 class="font-display text-5xl md:text-6xl font-black mb-4">Solve problems.</h2>
+      <p class="text-lg max-w-2xl" style="color:var(--muted)">Work through real HVAC problems. Enter your answer, get instant feedback, or load the givens directly into the interactive chart.</p>
+    </div>
+
+    <div class="flex flex-wrap gap-2 mb-8">
+      <button class="tab-btn active" data-filter="all">All Problems</button>
+      <button class="tab-btn" data-filter="basic">Basic</button>
+      <button class="tab-btn" data-filter="intermediate">Intermediate</button>
+      <button class="tab-btn" data-filter="advanced">Advanced</button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6" id="problemsList"></div>
+  </div>
+</section>
+
+<footer class="px-6 py-12 border-t" style="border-color:var(--border)">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,var(--amber) 0%,var(--amber-bright) 100%)"><i class="fa-solid fa-temperature-half" style="color:var(--bg)"></i></div>
+          <div class="font-display text-lg font-bold">Psychrometric Lab</div>
+        </div>
+        <p class="text-sm" style="color:var(--muted)">A complete interactive learning environment for moist-air thermodynamics. Built for engineering students.</p>
+      </div>
+      <div>
+        <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--muted)">Reference</div>
+        <ul class="space-y-2 text-sm">
+          <li>ASHRAE Handbook — Fundamentals</li>
+          <li>Sea-level pressure: 101.325 kPa</li>
+          <li>SI units throughout</li>
+          <li>Magnus saturation formula</li>
+        </ul>
+      </div>
+      <div>
+        <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--muted)">Properties Computed</div>
+        <div class="grid grid-cols-2 gap-1 text-xs font-mono" style="color:var(--muted)">
+          <span>· Dry-bulb T</span><span>· Wet-bulb T</span>
+          <span>· Dew point T</span><span>· Rel. humidity</span>
+          <span>· Humidity ratio</span><span>· Enthalpy</span>
+          <span>· Spec. volume</span><span>· Vapor pressure</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-8 pt-6 border-t text-xs flex flex-wrap justify-between gap-3" style="border-color:var(--border);color:var(--muted)">
+      <span>For educational use. Calculations follow ASHRAE psychrometric theory.</span>
+      <span>Built with web standards.</span>
+    </div>
+  </div>
+</footer>
+
+<div id="toast" class="toast">
+  <i id="toastIcon" class="fa-solid fa-circle-info"></i>
+  <span id="toastMsg">Message</span>
+</div>
+
+<script>
+const P_ATM=101.325,R_DA=0.287042,C_PA=1.006,C_PW=1.86,H_FG0=2501;
+
+function pws(T){if(T<-60)return 0;return 0.61094*Math.exp(17.625*T/(T+243.04))}
+function wFromPw(Pw){return 0.621945*Pw/(P_ATM-Pw)}
+function pwFromW(W){return P_ATM*W/(0.621945+W)}
+function dewPoint(Pw){if(Pw<=0)return -100;const a=Math.log(Pw/0.61094);return 243.04*a/(17.625-a)}
+function wetBulbFromDBT_W(DBT,W){
+  const Pw=pwFromW(W);if(Pw<=0)return -100;
+  let lo=-50,hi=DBT;
+  for(let i=0;i<80;i++){const mid=(lo+hi)/2;const A=0.00066*(1+0.00115*mid);const fMid=pws(mid)-A*P_ATM*(DBT-mid)-Pw;if(fMid<0)lo=mid;else hi=mid}
+  return (lo+hi)/2;
+}
+function computeFromDBT_W(DBT,W){
+  const Pw=pwFromW(W),Pws_val=pws(DBT);
+  const RH=Math.max(0,Math.min(100,Pw/Pws_val*100));
+  const h=C_PA*DBT+W*(H_FG0+C_PW*DBT);
+  const v=R_DA*(DBT+273.15)*(1+1.607858*W)/P_ATM;
+  const DPT=dewPoint(Pw),WBT=wetBulbFromDBT_W(DBT,W);
+  return {DBT,W,RH,h,v,DPT,WBT,Pw,Pws:Pws_val};
+}
+function computeState(mode,a,b){
+  let DBT,W;
+  switch(mode){
+    case 'DBT_RH':DBT=a;W=wFromPw(b/100*pws(a));break;
+    case 'DBT_WBT':{DBT=a;const WBT=b;const A=0.00066*(1+0.00115*WBT);const Pw=pws(WBT)-A*P_ATM*(DBT-WBT);W=wFromPw(Math.max(0.0001,Pw));break}
+    case 'DBT_W':DBT=a;W=b;break;
+    case 'DBT_DPT':DBT=a;W=wFromPw(pws(b));break;
+    case 'DBT_h':{DBT=a;const h=b;W=(h-C_PA*DBT)/(H_FG0+C_PW*DBT);break}
+    default:return null;
+  }
+  if(!isFinite(W)||W<0)W=0;
+  const Wsat=wFromPw(pws(DBT));if(W>Wsat)W=Wsat;
+  return computeFromDBT_W(DBT,W);
+}
+
+const chartConfig={dbtMin:0,dbtMax:50,wMin:0,wMax:0.030,chartL:70,chartR:0,chartT:40,chartB:0};
+
+function setupCanvas(canvas,w,h){
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=w*dpr;canvas.height=h*dpr;
+  canvas.style.width=w+'px';canvas.style.height=h+'px';
+  const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return ctx;
+}
+
+function drawChart(canvas,statePoint,opts){
+  opts=opts||{};
+  const W=canvas.clientWidth||800,H=canvas.clientHeight||600;
+  const ctx=setupCanvas(canvas,W,H);
+  const cfg=chartConfig;
+  cfg.chartR=W-30;cfg.chartB=H-60;
+  const dbtToX=dbt=>cfg.chartL+(dbt-cfg.dbtMin)/(cfg.dbtMax-cfg.dbtMin)*(cfg.chartR-cfg.chartL);
+  const wToY=wv=>cfg.chartB-(wv-cfg.wMin)/(cfg.wMax-cfg.wMin)*(cfg.chartB-cfg.chartT);
+
+  ctx.fillStyle='#15120f';ctx.fillRect(0,0,W,H);
+  const grad=ctx.createLinearGradient(0,cfg.chartT,0,cfg.chartB);
+  grad.addColorStop(0,'rgba(240,160,80,0.02)');grad.addColorStop(1,'rgba(94,234,212,0.015)');
+  ctx.fillStyle=grad;ctx.fillRect(cfg.chartL,cfg.chartT,cfg.chartR-cfg.chartL,cfg.chartB-cfg.chartT);
+
+  ctx.strokeStyle='rgba(168,162,158,0.06)';ctx.lineWidth=1;ctx.beginPath();
+  for(let t=0;t<=50;t+=5){ctx.moveTo(dbtToX(t),cfg.chartT);ctx.lineTo(dbtToX(t),cfg.chartB)}
+  for(let wv=0;wv<=0.030;wv+=0.005){ctx.moveTo(cfg.chartL,wToY(wv));ctx.lineTo(cfg.chartR,wToY(wv))}
+  ctx.stroke();
+
+  ctx.strokeStyle='rgba(134,239,172,0.18)';ctx.lineWidth=1;
+  for(let v=0.80;v<=0.95;v+=0.01){
+    ctx.beginPath();let started=false;
+    for(let t=0;t<=50;t+=0.5){const wv=(v*P_ATM*1000/(287.042*(t+273.15))-1)/1.607858;if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle='rgba(251,146,60,0.2)';ctx.lineWidth=1;
+  for(let h=10;h<=120;h+=10){
+    ctx.beginPath();let started=false;
+    for(let t=0;t<=50;t+=0.5){const wv=(h-C_PA*t)/(H_FG0+C_PW*t);if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle='rgba(103,232,249,0.18)';ctx.lineWidth=1;
+  for(let wbt=0;wbt<=40;wbt+=5){
+    ctx.beginPath();let started=false;
+    for(let t=wbt;t<=50;t+=0.5){const A=0.00066*(1+0.00115*wbt);const Pw=pws(wbt)-A*P_ATM*(t-wbt);if(Pw<=0)continue;const wv=wFromPw(Pw);if(wv>cfg.wMax)break;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
+    ctx.stroke();
+  }
+
+  const rhValues=[10,20,30,40,50,60,70,80,90];
+  rhValues.forEach(rh=>{
+    const alpha=0.25+(rh/100)*0.35;
+    ctx.strokeStyle='rgba(94,234,212,'+alpha+')';ctx.lineWidth=1.2;ctx.beginPath();let started=false;
+    for(let t=0;t<=50;t+=0.2){const Pwv=(rh/100)*pws(t);const wv=wFromPw(Pwv);if(wv>cfg.wMax)continue;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
+    ctx.stroke();
+    const labelT=4+(rh/100)*30;const wvLabel=wFromPw((rh/100)*pws(labelT));
+    if(wvLabel<=cfg.wMax){ctx.save();ctx.fillStyle='rgba(94,234,212,0.7)';ctx.font='10px JetBrains Mono';ctx.textAlign='left';ctx.fillText(rh+'%',dbtToX(labelT)-12,wToY(wvLabel)-4);ctx.restore()}
+  });
+
+  function drawZone(t1,t2,rh1,rh2,color){
+    const pts=[[t1,wFromPw(rh1/100*pws(t1))],[t2,wFromPw(rh1/100*pws(t2))],[t2,wFromPw(rh2/100*pws(t2))],[t1,wFromPw(rh2/100*pws(t1))]];
+    ctx.fillStyle=color;ctx.beginPath();
+    pts.forEach((p,i)=>{const x=dbtToX(p[0]),y=wToY(p[1]);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});
+    ctx.closePath();ctx.fill();
+  }
+  if(opts.showComfort!==false){
+    drawZone(23,26,30,60,'rgba(251,191,36,0.06)');
+    drawZone(20,23.5,30,60,'rgba(103,232,249,0.05)');
+  }
+
+  ctx.strokeStyle='#fbbf24';ctx.lineWidth=2.5;ctx.shadowColor='rgba(251,191,36,0.4)';ctx.shadowBlur=6;ctx.beginPath();let started=false;
+  for(let t=0;t<=50;t+=0.2){const wv=wFromPw(pws(t));if(wv>cfg.wMax)break;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
+  ctx.stroke();ctx.shadowBlur=0;
+
+  ctx.strokeStyle='rgba(168,162,158,0.6)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cfg.chartL,cfg.chartT);ctx.lineTo(cfg.chartL,cfg.chartB);ctx.lineTo(cfg.chartR,cfg.chartB);ctx.stroke();
+
+  ctx.fillStyle='#a39b8e';ctx.font='11px JetBrains Mono';ctx.textAlign='center';
+  for(let t=0;t<=50;t+=5){const x=dbtToX(t);ctx.fillText(t.toString(),x,cfg.chartB+18);ctx.strokeStyle='rgba(168,162,158,0.6)';ctx.beginPath();ctx.moveTo(x,cfg.chartB);ctx.lineTo(x,cfg.chartB+5);ctx.stroke()}
+  ctx.fillStyle='#f5efe6';ctx.font='600 12px DM Sans';ctx.fillText('Dry-Bulb Temperature (°C)',(cfg.chartL+cfg.chartR)/2,cfg.chartB+42);
+
+  ctx.textAlign='right';ctx.fillStyle='#a39b8e';ctx.font='11px JetBrains Mono';
+  for(let wv=0;wv<=0.030;wv+=0.005){const y=wToY(wv);ctx.fillText(wv.toFixed(3),cfg.chartL-8,y+4);ctx.strokeStyle='rgba(168,162,158,0.6)';ctx.beginPath();ctx.moveTo(cfg.chartL,y);ctx.lineTo(cfg.chartL-5,y);ctx.stroke()}
+  ctx.save();ctx.translate(18,(cfg.chartT+cfg.chartB)/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillStyle='#f5efe6';ctx.font='600 12px DM Sans';ctx.fillText('Humidity Ratio W (kg/kg)',0,0);ctx.restore();
+
+  ctx.textAlign='right';ctx.fillStyle='rgba(245,239,230,0.4)';ctx.font='10px JetBrains Mono';ctx.fillText('PSYCHROMETRIC CHART · SEA LEVEL · 101.325 kPa',cfg.chartR-5,cfg.chartT-15);
+
+  if(statePoint&&isFinite(statePoint.DBT)&&isFinite(statePoint.W)){
+    const sp=statePoint;const x=dbtToX(sp.DBT),y=wToY(sp.W);
+
+    if(sp.RH>0&&sp.RH<100){
+      ctx.strokeStyle='rgba(94,234,212,0.95)';ctx.lineWidth=2.2;ctx.beginPath();let st=false;
+      for(let t=0;t<=50;t+=0.2){const wv=wFromPw((sp.RH/100)*pws(t));if(wv>cfg.wMax)continue;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
+      ctx.stroke();
+    }
+    if(sp.WBT>-50){
+      ctx.strokeStyle='rgba(103,232,249,0.85)';ctx.lineWidth=2;ctx.beginPath();let st=false;
+      for(let t=sp.WBT;t<=50;t+=0.3){const A=0.00066*(1+0.00115*sp.WBT);const Pw=pws(sp.WBT)-A*P_ATM*(t-sp.WBT);if(Pw<=0)continue;const wv=wFromPw(Pw);if(wv>cfg.wMax)break;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
+      ctx.stroke();
+    }
+    ctx.strokeStyle='rgba(251,146,60,0.85)';ctx.lineWidth=2;ctx.beginPath();let st=false;
+    for(let t=0;t<=50;t+=0.3){const wv=(sp.h-C_PA*t)/(H_FG0+C_PW*t);if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
+    ctx.stroke();
+    ctx.strokeStyle='rgba(134,239,172,0.8)';ctx.lineWidth=2;ctx.beginPath();st=false;
+    for(let t=0;t<=50;t+=0.3){const wv=(sp.v*P_ATM*1000/(287.042*(t+273.15))-1)/1.607858;if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
+    ctx.stroke();
+
+    ctx.strokeStyle='rgba(251,191,36,0.5)';ctx.lineWidth=1.2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,cfg.chartB);ctx.moveTo(x,y);ctx.lineTo(cfg.chartL,y);ctx.stroke();ctx.setLineDash([]);
+
+    ctx.shadowColor='#fbbf24';ctx.shadowBlur=18;ctx.fillStyle='#fde68a';ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#0a0908';ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+
+    const label=sp.DBT.toFixed(1)+'°C · '+(sp.W*1000).toFixed(2)+' g/kg';
+    ctx.font='600 11px JetBrains Mono';const tw=ctx.measureText(label).width;
+    const tx=Math.min(x+12,cfg.chartR-tw-12),ty=Math.max(y-28,cfg.chartT+8);
+    ctx.fillStyle='rgba(10,9,8,0.92)';ctx.strokeStyle='#fbbf24';ctx.lineWidth=1;ctx.fillRect(tx,ty,tw+14,22);ctx.strokeRect(tx,ty,tw+14,22);
+    ctx.fillStyle='#fde68a';ctx.textAlign='left';ctx.fillText(label,tx+7,ty+15);
+  }
+}
+
+function drawProcessChart(canvas, s1, s2) {
+  const W = canvas.clientWidth || 800, H = canvas.clientHeight || 600;
+  setupCanvas(canvas, W, H);
+  drawChart(canvas, null, { showComfort: true });
+  
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const cfg = chartConfig;
+  const dbtToX = dbt => cfg.chartL + (dbt - cfg.dbtMin) / (cfg.dbtMax - cfg.dbtMin) * (cfg.chartR - cfg.chartL);
+  const wToY = wv => cfg.chartB - (wv - cfg.wMin) / (cfg.wMax - cfg.wMin) * (cfg.chartB - cfg.chartT);
+
+  const x1 = dbtToX(s1.DBT), y1 = wToY(s1.W);
+  const x2 = dbtToX(s2.DBT), y2 = wToY(s2.W);
+
+  ctx.strokeStyle = 'rgba(244, 114, 182, 0.9)';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(244, 114, 182, 0.4)';
+  ctx.shadowBlur = 10;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+
+  ctx.shadowColor = '#67e8f9'; ctx.shadowBlur = 15; ctx.fillStyle = '#67e8f9';
+  ctx.beginPath(); ctx.arc(x1, y1, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0; ctx.fillStyle = '#0a0908';
+  ctx.beginPath(); ctx.arc(x1, y1, 3, 0, Math.PI * 2); ctx.fill();
+  
+  ctx.shadowColor = '#fb923c'; ctx.shadowBlur = 15; ctx.fillStyle = '#fb923c';
+  ctx.beginPath(); ctx.arc(x2, y2, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0; ctx.fillStyle = '#0a0908';
+  ctx.beginPath(); ctx.arc(x2, y2, 3, 0, Math.PI * 2); ctx.fill();
+
+  ctx.font = '600 12px JetBrains Mono';
+  ctx.fillStyle = '#67e8f9';
+  ctx.textAlign = 'left';
+  ctx.fillText('State 1 (' + s1.DBT.toFixed(1) + '°C, ' + s1.RH.toFixed(0) + '%)', x1 + 12, y1 - 8);
+  
+  ctx.fillStyle = '#fb923c';
+  ctx.fillText('State 2 (' + s2.DBT.toFixed(1) + '°C, ' + s2.RH.toFixed(0) + '%)', x2 + 12, y2 - 8);
+}
+
+const propertiesData=[
+  {symbol:'DBT',name:'Dry-Bulb Temperature',unit:'°C',icon:'fa-temperature-half',color:'var(--amber-bright)',desc:'The ordinary air temperature measured by a standard thermometer shielded from radiation.',formula:'Independent variable on the x-axis',detail:'It does not account for moisture. Ranges typically from -10°C to 50°C in HVAC work.'},
+  {symbol:'WBT',name:'Wet-Bulb Temperature',unit:'°C',icon:'fa-temperature-low',color:'var(--cyan)',desc:'Temperature read by a thermometer wrapped in wet wick, ventilated until equilibrium.',formula:'Pw = Pws(WBT) − A·P·(DBT − WBT)',detail:'Approximates the temperature air reaches during adiabatic saturation. Constant-WBT lines slope down-right.'},
+  {symbol:'DPT',name:'Dew-Point Temperature',unit:'°C',icon:'fa-droplet',color:'var(--teal)',desc:'Temperature at which moisture begins to condense when air is cooled at constant pressure.',formula:'Tdp = 243.04·α / (17.625 − α)',detail:'A horizontal line on the chart (constant W). Below DPT, condensation occurs.'},
+  {symbol:'RH',name:'Relative Humidity',unit:'%',icon:'fa-percent',color:'var(--teal)',desc:'Ratio of actual vapor pressure to saturation vapor pressure at the same temperature.',formula:'RH = Pw / Pws(DBT) × 100',detail:'Curved lines emanating from the lower-left. 100% RH is the saturation boundary.'},
+  {symbol:'W',name:'Humidity Ratio',unit:'kg/kg',icon:'fa-cloud',color:'var(--amber)',desc:'Mass of water vapor per unit mass of dry air.',formula:'W = 0.621945 · Pw / (P − Pw)',detail:'Also called specific humidity. Plotted on the y-axis. Typical range 0–0.030 kg/kg.'},
+  {symbol:'h',name:'Enthalpy',unit:'kJ/kg',icon:'fa-fire-flame-curved',color:'var(--orange)',desc:'Total heat content of moist air per kg of dry air.',formula:'h = 1.006·T + W·(2501 + 1.86·T)',detail:'Lines slope down-right, nearly parallel to wet-bulb lines. Change in h = heat added/removed.'},
+  {symbol:'v',name:'Specific Volume',unit:'m³/kg',icon:'fa-expand',color:'var(--green)',desc:'Volume occupied by 1 kg of dry air plus its associated moisture.',formula:'v = R·(T+273.15)·(1+1.6078·W) / P',detail:'Steeper diagonal lines. Used to convert mass flow to volumetric flow for fan sizing.'},
+  {symbol:'Pw',name:'Vapor Pressure',unit:'kPa',icon:'fa-gauge-high',color:'var(--amber-bright)',desc:'Partial pressure exerted by water vapor in the air mixture.',formula:'Pw = P · W / (0.621945 + W)',detail:'Directly related to W. Determines boiling, evaporation, condensation behavior.'},
+  {symbol:'Pws',name:'Saturation Pressure',unit:'kPa',icon:'fa-water',color:'var(--cyan)',desc:'Maximum pressure water vapor can exert at a given temperature.',formula:'Pws(T) = 0.61094 · exp(17.625·T / (T+243.04))',detail:'The Magnus approximation. At 20°C, Pws ≈ 2.34 kPa. At 30°C, ≈ 4.25 kPa.'}
+];
+
+function renderPropertiesGrid(){
+  const grid=document.getElementById('propertiesGrid');
+  grid.innerHTML=propertiesData.map(p=>'<div class="card concept-card card-hover p-5"><div class="flex items-start justify-between mb-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:'+p.color+'20;color:'+p.color+'"><i class="fa-solid '+p.icon+'"></i></div><div class="text-right"><div class="font-display text-2xl font-bold" style="color:'+p.color+'">'+p.symbol+'</div><div class="text-xs font-mono" style="color:var(--muted)">'+p.unit+'</div></div></div><div class="font-semibold mb-2">'+p.name+'</div><p class="text-sm mb-3" style="color:var(--muted)">'+p.desc+'</p><div class="formula text-xs">'+p.formula+'</div><p class="text-xs mt-3" style="color:var(--muted)">'+p.detail+'</p></div>').join('');
+}
+
+function drawTutorialChart(){
+  const canvas=document.getElementById('tutorialChart');if(!canvas)return;
+  const state=computeFromDBT_W(25,0.01);
+  drawChart(canvas,state,{showComfort:false});
+}
+
+let heroAnimId;
+function drawHeroChart(){
+  const canvas=document.getElementById('heroChart');if(!canvas)return;
+  let t=0;
+  function frame(){
+    t+=0.005;const dbt=22+8*Math.sin(t);const rh=50+25*Math.sin(t*0.7+1);
+    const state=computeState('DBT_RH',dbt,rh);
+    drawChart(canvas,state,{showComfort:false});
+    heroAnimId=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+let currentState=null,currentMode='DBT_RH';
+const modeConfig={
+  DBT_RH:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:25,min:0,max:50,step:0.1},b:{label:'Relative Humidity',unit:'%',def:50,min:0,max:100,step:1}},
+  DBT_WBT:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:30,min:0,max:50,step:0.1},b:{label:'Wet-Bulb Temperature',unit:'°C',def:20,min:-10,max:50,step:0.1}},
+  DBT_W:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:25,min:0,max:50,step:0.1},b:{label:'Humidity Ratio',unit:'kg/kg',def:0.010,min:0,max:0.030,step:0.0005}},
+  DBT_DPT:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:28,min:0,max:50,step:0.1},b:{label:'Dew-Point Temperature',unit:'°C',def:15,min:-20,max:50,step:0.1}},
+  DBT_h:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:25,min:0,max:50,step:0.1},b:{label:'Enthalpy',unit:'kJ/kg',def:50,min:0,max:120,step:0.5}}
+};
+
+function renderInputFields(){
+  const cfg=modeConfig[currentMode];const container=document.getElementById('inputFields');
+  container.innerHTML='<div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+cfg.a.label+'</label><div class="relative"><input id="inputA" type="number" class="input-field pr-12" value="'+cfg.a.def+'" min="'+cfg.a.min+'" max="'+cfg.a.max+'" step="'+cfg.a.step+'"><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono" style="color:var(--muted)">'+cfg.a.unit+'</span></div></div><div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+cfg.b.label+'</label><div class="relative"><input id="inputB" type="number" class="input-field pr-12" value="'+cfg.b.def+'" min="'+cfg.b.min+'" max="'+cfg.b.max+'" step="'+cfg.b.step+'"><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono" style="color:var(--muted)">'+cfg.b.unit+'</span></div></div>';
+  document.getElementById('inputA').addEventListener('input',updateFromInputs);
+  document.getElementById('inputB').addEventListener('input',updateFromInputs);
+}
+
+function updateFromInputs(){
+  const a=parseFloat(document.getElementById('inputA').value);
+  const b=parseFloat(document.getElementById('inputB').value);
+  if(!isFinite(a)||!isFinite(b))return;
+  const state=computeState(currentMode,a,b);if(!state)return;
+  currentState=state;
+  drawChart(document.getElementById('psychChart'),state);
+  renderResults(state);
+  document.getElementById('statusBadge').textContent='● Live';
+  document.getElementById('statusBadge').style.color='var(--green)';
+}
+
+function renderResults(s){
+  const rows=[
+    {label:'Dry-Bulb Temp',value:s.DBT.toFixed(2),unit:'°C',color:'var(--amber-bright)'},
+    {label:'Wet-Bulb Temp',value:s.WBT.toFixed(2),unit:'°C',color:'var(--cyan)'},
+    {label:'Dew-Point Temp',value:s.DPT.toFixed(2),unit:'°C',color:'var(--teal)'},
+    {label:'Relative Humidity',value:s.RH.toFixed(1),unit:'%',color:'var(--teal)'},
+    {label:'Humidity Ratio',value:s.W.toFixed(5),unit:'kg/kg',color:'var(--amber)'},
+    {label:'Enthalpy',value:s.h.toFixed(2),unit:'kJ/kg',color:'var(--orange)'},
+    {label:'Specific Volume',value:s.v.toFixed(4),unit:'m³/kg',color:'var(--green)'},
+    {label:'Vapor Pressure',value:s.Pw.toFixed(3),unit:'kPa',color:'var(--amber-bright)'}
+  ];
+  document.getElementById('resultsList').innerHTML=rows.map(r=>'<div class="property-pill" style="border-left-color:'+r.color+'"><div><div class="label">'+r.label+'</div><div class="value">'+r.value+' <span style="color:var(--muted);font-size:11px;font-weight:400">'+r.unit+'</span></div></div></div>').join('');
+}
+
+// FIXED CLICK & HOVER INTERACTION MATH
+function setupChartInteraction(){
+  const canvas=document.getElementById('psychChart');
+  
+  canvas.addEventListener('click',(e)=>{
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    
+    // Recalculate bounds locally at the exact moment of the click
+    const W=rect.width;
+    const H=rect.height;
+    const cL=70, cR=W-30, cT=40, cB=H-60;
+    
+    const dbt=(x-cL)/(cR-cL)*(chartConfig.dbtMax-chartConfig.dbtMin)+chartConfig.dbtMin;
+    const w=(cB-y)/(cB-cT)*(chartConfig.wMax-chartConfig.wMin)+chartConfig.wMin;
+    
+    if(dbt<chartConfig.dbtMin||dbt>chartConfig.dbtMax||w<chartConfig.wMin||w>chartConfig.wMax)return;
+    
+    const Wsat=wFromPw(pws(dbt));
+    const Wclamped=Math.min(w,Wsat);
+    
+    document.getElementById('inputMode').value='DBT_W';
+    currentMode='DBT_W';
+    renderInputFields();
+    document.getElementById('inputA').value=dbt.toFixed(2);
+    document.getElementById('inputB').value=Wclamped.toFixed(5);
+    updateFromInputs();
+    showToast('State point set by click','info');
+  });
+
+  canvas.addEventListener('mousemove',(e)=>{
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    
+    const W=rect.width;
+    const H=rect.height;
+    const cL=70, cR=W-30, cT=40, cB=H-60;
+    
+    const dbt=(x-cL)/(cR-cL)*(chartConfig.dbtMax-chartConfig.dbtMin)+chartConfig.dbtMin;
+    const w=(cB-y)/(cB-cT)*(chartConfig.wMax-chartConfig.wMin)+chartConfig.wMin;
+    
+    if(dbt>=chartConfig.dbtMin&&dbt<=chartConfig.dbtMax&&w>=chartConfig.wMin&&w<=chartConfig.wMax){
+      document.getElementById('cursorInfo').textContent='DBT: '+dbt.toFixed(1)+'°C  W: '+w.toFixed(4)+' kg/kg';
+    }else{
+      document.getElementById('cursorInfo').textContent='—';
+    }
+  });
+
+  canvas.addEventListener('mouseleave',()=>{document.getElementById('cursorInfo').textContent='—'});
+}
+
+function updateProcessChart() {
+  const dbt1 = parseFloat(document.getElementById('p_dbt1').value);
+  const rh1 = parseFloat(document.getElementById('p_rh1').value);
+  const dbt2 = parseFloat(document.getElementById('p_dbt2').value);
+  const rh2 = parseFloat(document.getElementById('p_rh2').value);
+
+  if(!isFinite(dbt1)||!isFinite(rh1)||!isFinite(dbt2)||!isFinite(rh2)) return;
+
+  const s1 = computeState('DBT_RH', dbt1, rh1);
+  const s2 = computeState('DBT_RH', dbt2, rh2);
+  
+  drawProcessChart(document.getElementById('processChart'), s1, s2);
+
+  const dDBT = s2.DBT - s1.DBT;
+  const dW = s2.W - s1.W;
+  const dh = s2.h - s1.h;
+
+  const q_sensible = 1.006 * dDBT; 
+  const q_latent = 2501 * dW;      
+  const q_total = q_sensible + q_latent;
+
+  const rows = [
+    {label:'Δ Dry-Bulb Temp (ΔDBT)', value:dDBT.toFixed(2), unit:'°C', color:'var(--amber-bright)'},
+    {label:'Δ Humidity Ratio (ΔW)', value:(dW*1000).toFixed(2), unit:'g/kg', color:'var(--teal)'},
+    {label:'Δ Enthalpy (Δh)', value:dh.toFixed(2), unit:'kJ/kg', color:'var(--orange)'},
+    {label:'Sensible Heat (Qs)', value:q_sensible.toFixed(2), unit:'kJ/kg', color:'var(--cyan)'},
+    {label:'Latent Heat (Ql)', value:q_latent.toFixed(2), unit:'kJ/kg', color:'var(--green)'},
+    {label:'Total Heat (Qt)', value:q_total.toFixed(2), unit:'kJ/kg', color:'var(--pink)'}
+  ];
+
+  document.getElementById('processResults').innerHTML = rows.map(r => 
+    '<div class="property-pill" style="border-left-color:'+r.color+'"><div><div class="label">'+r.label+'</div><div class="value">'+r.value+' <span style="color:var(--muted);font-size:11px;font-weight:400">'+r.unit+'</span></div></div></div>'
+  ).join('');
+}
+
+function setProcess(dbt1, rh1, dbt2, rh2) {
+  document.getElementById('p_dbt1').value = dbt1;
+  document.getElementById('p_rh1').value = rh1;
+  document.getElementById('p_dbt2').value = dbt2;
+  document.getElementById('p_rh2').value = rh2;
+  updateProcessChart();
+}
+
+const problems=[
+  {id:1,difficulty:'basic',title:'Find Relative Humidity',statement:'Air at 25°C dry-bulb temperature has a wet-bulb temperature of 18°C. Determine the relative humidity.',givens:{DBT:25,WBT:18},inputs:[{key:'RH',label:'Relative Humidity',unit:'%',tolerance:2}],solution:'Using the psychrometric equation:\nPw = Pws(WBT) − A·P·(DBT − WBT)\nwhere A = 0.00066 × (1 + 0.00115×18) = 0.000677\n\nPws(18°C) = 2.064 kPa\nPw = 2.064 − 0.000677 × 101.325 × (25 − 18)\nPw = 2.064 − 0.480 = 1.584 kPa\n\nPws(25°C) = 3.170 kPa\nRH = (1.584 / 3.170) × 100 ≈ 50.0%',loadMode:'DBT_WBT'},
+  {id:2,difficulty:'basic',title:'Find the Dew Point',statement:'Moist air at 20°C and 60% relative humidity. Calculate the dew-point temperature.',givens:{DBT:20,RH:60},inputs:[{key:'DPT',label:'Dew-Point Temperature',unit:'°C',tolerance:0.5}],solution:'Pw = RH × Pws(DBT) = 0.60 × 2.339 = 1.403 kPa\n\nUsing the Magnus inverse:\nα = ln(Pw/0.61094) = ln(2.296) = 0.831\nDPT = 243.04 × 0.831 / (17.625 − 0.831)\nDPT ≈ 12.0°C',loadMode:'DBT_RH'},
+  {id:3,difficulty:'basic',title:'Specific Volume',statement:'Find the specific volume of air at 25°C dry-bulb and 50% relative humidity.',givens:{DBT:25,RH:50},inputs:[{key:'v',label:'Specific Volume',unit:'m³/kg',tolerance:0.005}],solution:'Pw = 0.5 × Pws(25) = 0.5 × 3.170 = 1.585 kPa\nW = 0.621945 × 1.585 / (101.325 − 1.585) = 0.00988 kg/kg\n\nv = R·(T+273.15)·(1+1.6078·W) / P\nv = 0.287042 × 298.15 × (1 + 1.6078 × 0.00988) / 101.325\nv ≈ 0.858 m³/kg',loadMode:'DBT_RH'},
+  {id:4,difficulty:'intermediate',title:'Calculate Enthalpy',statement:'Moist air is at 30°C dry-bulb and 20°C wet-bulb. Find the enthalpy per kg of dry air.',givens:{DBT:30,WBT:20},inputs:[{key:'h',label:'Enthalpy',unit:'kJ/kg',tolerance:1.0}],solution:'From DBT=30, WBT=20:\nPw = Pws(20) − A·P·(30−20) = 2.339 − 0.000675×101.325×10\nPw = 2.339 − 0.683 = 1.656 kPa\nW = 0.621945 × 1.656 / (101.325 − 1.656) = 0.01032 kg/kg\n\nh = 1.006×30 + 0.01032×(2501 + 1.86×30)\nh = 30.18 + 26.39 ≈ 56.6 kJ/kg',loadMode:'DBT_WBT'},
+  {id:5,difficulty:'intermediate',title:'Sensible Heating',statement:'Air at 10°C, 50% RH is heated sensibly to 25°C. What is the final relative humidity? (Hint: W stays constant.)',givens:{DBT:10,RH:50},inputs:[{key:'RH',label:'Final Relative Humidity',unit:'%',tolerance:2}],solution:'Initial: Pw = 0.5 × Pws(10) = 0.5 × 1.228 = 0.614 kPa\nW₁ = 0.621945 × 0.614 / 101.711 = 0.00376 kg/kg\n\nSensible heating → W constant: W₂ = W₁ = 0.00376\nAt 25°C: Pws(25) = 3.170 kPa\nPw₂ = P × W₂ / (0.621945 + W₂) = 0.614 kPa\nRH₂ = 0.614 / 3.170 × 100 ≈ 19.4%',loadMode:'DBT_RH'},
+  {id:6,difficulty:'intermediate',title:'Humidity Ratio from WBT',statement:'Air at 32°C dry-bulb has a wet-bulb of 24°C. Find the humidity ratio W.',givens:{DBT:32,WBT:24},inputs:[{key:'W',label:'Humidity Ratio',unit:'kg/kg',tolerance:0.0005}],solution:'A = 0.00066 × (1 + 0.00115 × 24) = 0.000678\nPws(24) = 2.985 kPa\n\nPw = 2.985 − 0.000678 × 101.325 × (32 − 24)\nPw = 2.985 − 0.550 = 2.435 kPa\n\nW = 0.621945 × 2.435 / (101.325 − 2.435) = 0.01528 kg/kg',loadMode:'DBT_WBT'},
+  {id:7,difficulty:'advanced',title:'Cooling Coil Dehumidification',statement:'Air at 30°C, 70% RH enters a cooling coil and leaves saturated at 15°C. Find the moisture removed per kg of dry air.',givens:{DBT:30,RH:70},inputs:[{key:'dW',label:'Moisture Removed',unit:'kg/kg',tolerance:0.0005}],solution:'State 1: DBT=30, RH=70%\nPw₁ = 0.7 × 4.246 = 2.972 kPa\nW₁ = 0.621945 × 2.972 / 98.353 = 0.01879 kg/kg\n\nState 2: Saturated at 15°C\nPw₂ = Pws(15) = 1.705 kPa\nW₂ = 0.621945 × 1.705 / 99.620 = 0.01064 kg/kg\n\nΔW = W₁ − W₂ = 0.01879 − 0.01064 ≈ 0.00815 kg/kg\n(≈ 8.15 g of water removed per kg dry air)',loadMode:'DBT_RH'},
+  {id:8,difficulty:'advanced',title:'Evaporative Cooling',statement:'Outdoor air at 40°C, 20% RH passes through an adiabatic spray chamber. If the final RH is 90%, find the final dry-bulb temperature. (Constant WBT process.)',givens:{DBT:40,RH:20},inputs:[{key:'DBT2',label:'Final Dry-Bulb Temp',unit:'°C',tolerance:1.0}],solution:'Process is adiabatic saturation → WBT constant.\n\nState 1: DBT=40, RH=20%\nPw₁ = 0.2 × 7.384 = 1.477 kPa\nW₁ = 0.621945 × 1.477 / 99.848 = 0.00920 kg/kg\nWBT₁ ≈ 21.9°C (from iterative solution)\n\nState 2: WBT = 21.9°C, RH = 90%\nSolving: DBT₂ ≈ 23.5°C\n\nThe air is cooled by ~16.5°C with no external energy input.',loadMode:'DBT_RH'},
+  {id:9,difficulty:'advanced',title:'Adiabatic Mixing',statement:'1 kg/s of air at 10°C, 30% RH is mixed adiabatically with 2 kg/s of air at 30°C, 80% RH. Find the mixture dry-bulb temperature.',givens:{DBT:10,RH:30},inputs:[{key:'DBTm',label:'Mixture Dry-Bulb Temp',unit:'°C',tolerance:0.5}],solution:'Stream 1 (m₁=1): DBT=10, RH=30%\nW₁ = 0.00228 kg/kg, h₁ = 15.76 kJ/kg\n\nStream 2 (m₂=2): DBT=30, RH=80%\nW₂ = 0.02149 kg/kg, h₂ = 85.16 kJ/kg\n\nMass & energy balances (m₁+m₂=3):\nDBTm = (1×10 + 2×30)/3 = 23.3°C\nWm = (1×0.00228 + 2×0.02149)/3 = 0.01509 kg/kg\n\nAnswer: DBTm ≈ 23.3°C',loadMode:'DBT_RH'},
+  {id:10,difficulty:'intermediate',title:'Comfort Zone Check',statement:'Is air at 22°C and 50% RH inside the ASHRAE winter comfort zone (20–23.5°C, 30–60% RH)?',givens:{DBT:22,RH:50},inputs:[{key:'answer',label:'Answer (yes/no)',unit:'',tolerance:0,type:'text'}],solution:'Check each criterion:\n• Dry-bulb: 22°C is within [20, 23.5] ✓\n• Relative humidity: 50% is within [30, 60] ✓\n\nBoth conditions satisfied → YES, the state is inside the winter comfort zone.\n\nIn fact, 22°C / 50% RH is one of the most comfortable combinations for sedentary occupants in winter clothing.',loadMode:'DBT_RH'}
+];
+
+function renderProblems(filter){
+  filter=filter||'all';
+  const list=document.getElementById('problemsList');
+  const filtered=filter==='all'?problems:problems.filter(p=>p.difficulty===filter);
+  list.innerHTML=filtered.map(p=>{
+    const diffClass='diff-'+p.difficulty;
+    return '<div class="card p-6 flex flex-col" data-difficulty="'+p.difficulty+'"><div class="flex items-start justify-between mb-3 gap-3"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="difficulty-badge '+diffClass+'">'+p.difficulty+'</span><span class="text-xs font-mono" style="color:var(--muted)">Problem #'+p.id+'</span></div><h4 class="font-display text-xl font-bold mb-1">'+p.title+'</h4></div></div><p class="text-sm mb-4">'+p.statement+'</p><div class="bg-black/30 rounded-lg p-3 mb-4 text-xs font-mono" style="border:1px solid var(--border)"><span style="color:var(--muted)">GIVENS: </span><span style="color:var(--amber-bright)">'+Object.entries(p.givens).map(e=>e[0]+'='+e[1]).join(', ')+'</span></div><div class="space-y-3 mb-4">'+p.inputs.map(inp=>'<div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+inp.label+(inp.unit?' ('+inp.unit+')':'')+'</label><div class="flex gap-2"><input type="'+(inp.type||'number')+'" id="ans-'+p.id+'-'+inp.key+'" class="input-field" placeholder="Your answer" '+(inp.type!=='text'?'step="any"':'')+'><button class="btn btn-primary text-xs whitespace-nowrap" onclick="checkAnswer('+p.id+',\''+inp.key+'\','+inp.tolerance+')"><i class="fa-solid fa-check"></i> Check</button></div><div id="feedback-'+p.id+'-'+inp.key+'" class="text-xs mt-2"></div></div>').join('')+'</div><div class="flex gap-2 mt-auto"><button class="btn btn-ghost text-xs flex-1 justify-center" onclick="loadProblemToChart('+p.id+')"><i class="fa-solid fa-arrow-up-right-from-square"></i> Load to Chart</button><button class="btn btn-ghost text-xs flex-1 justify-center" onclick="toggleSolution('+p.id+')"><i class="fa-solid fa-lightbulb"></i> Show Solution</button></div><div id="solution-'+p.id+'" class="hidden mt-4 pt-4 border-t" style="border-color:var(--border)"><div class="text-xs uppercase tracking-wider mb-2" style="color:var(--amber-bright)">Step-by-step Solution</div><pre class="text-xs font-mono whitespace-pre-wrap" style="color:var(--text);line-height:1.6">'+p.solution+'</pre></div></div>';
+  }).join('');
+}
+
+function checkAnswer(problemId,key,tolerance){
+  const problem=problems.find(p=>p.id===problemId);
+  const input=problem.inputs.find(i=>i.key===key);
+  const userAns=document.getElementById('ans-'+problemId+'-'+key).value.trim();
+  const feedbackEl=document.getElementById('feedback-'+problemId+'-'+key);
+  if(!userAns){feedbackEl.innerHTML='<span style="color:var(--danger)"><i class="fa-solid fa-circle-exclamation"></i> Please enter an answer.</span>';return}
+  const givenState=computeState(problem.loadMode,problem.givens.DBT,problem.givens.RH||problem.givens.WBT);
+  let correctAns;
+  if(key==='dW'){const W2=wFromPw(pws(15));correctAns=givenState.W-W2}
+  else if(key==='DBT2'){const wbt=givenState.WBT;let lo=0,hi=50;for(let i=0;i<60;i++){const mid=(lo+hi)/2;const s=computeState('DBT_RH',mid,90);if(s.WBT>wbt)lo=mid;else hi=mid}correctAns=(lo+hi)/2}
+  else if(key==='DBTm'){correctAns=(1*10+2*30)/3}
+  else if(key==='answer'){const lower=userAns.toLowerCase();if(lower==='yes'||lower==='y'){feedbackEl.innerHTML='<span style="color:var(--green)"><i class="fa-solid fa-circle-check"></i> Correct! 22°C/50% RH is inside the winter comfort zone.</span>'}else{feedbackEl.innerHTML='<span style="color:var(--danger)"><i class="fa-solid fa-circle-xmark"></i> Not quite. Check the comfort zone criteria again.</span>'}return}
+  else{correctAns=givenState[key]}
+  const userVal=parseFloat(userAns);
+  if(!isFinite(userVal)){feedbackEl.innerHTML='<span style="color:var(--danger)"><i class="fa-solid fa-circle-exclamation"></i> Please enter a valid number.</span>';return}
+  const diff=Math.abs(userVal-correctAns);const pctErr=Math.abs(diff/correctAns*100);
+  if(diff<=tolerance){feedbackEl.innerHTML='<span style="color:var(--green)"><i class="fa-solid fa-circle-check"></i> Correct! Accepted answer: '+correctAns.toFixed(3)+' '+(input.unit||'')+' (within ±'+tolerance+' '+(input.unit||'')+').</span>';showToast('Problem solved correctly!','success')}
+  else if(pctErr<10){feedbackEl.innerHTML='<span style="color:var(--amber-bright)"><i class="fa-solid fa-circle-exclamation"></i> Close! Your answer: '+userVal+', expected ≈ '+correctAns.toFixed(3)+' '+(input.unit||'')+'. Check your calculations.</span>'}
+  else{feedbackEl.innerHTML='<span style="color:var(--danger)"><i class="fa-solid fa-circle-xmark"></i> Not quite. Expected ≈ '+correctAns.toFixed(3)+' '+(input.unit||'')+'. Try loading the givens into the chart to verify.</span>'}
+}
+
+function loadProblemToChart(problemId){
+  const problem=problems.find(p=>p.id===problemId);
+  document.getElementById('inputMode').value=problem.loadMode;currentMode=problem.loadMode;renderInputFields();
+  document.getElementById('inputA').value=problem.givens.DBT;
+  document.getElementById('inputB').value=problem.givens.RH||problem.givens.WBT;
+  updateFromInputs();
+  document.getElementById('chart').scrollIntoView({behavior:'smooth'});
+  showToast('Problem '+problem.id+' givens loaded into chart','info');
+}
+
+function toggleSolution(problemId){document.getElementById('solution-'+problemId).classList.toggle('hidden')}
+
+function showToast(msg,type){
+  type=type||'info';
+  const toast=document.getElementById('toast');const icon=document.getElementById('toastIcon');const msgEl=document.getElementById('toastMsg');
+  msgEl.textContent=msg;toast.className='toast '+type+' show';
+  const iconMap={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info'};
+  const colorMap={success:'var(--green)',error:'var(--danger)',info:'var(--amber-bright)'};
+  icon.className='fa-solid '+iconMap[type];icon.style.color=colorMap[type];
+  clearTimeout(window._toastTimer);window._toastTimer=setTimeout(()=>toast.classList.remove('show'),3000);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderPropertiesGrid();renderProblems();renderInputFields();setupChartInteraction();updateFromInputs();drawTutorialChart();drawHeroChart();
+  updateProcessChart();
+  
+  ['p_dbt1','p_rh1','p_dbt2','p_rh2'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateProcessChart);
+  });
+
+  document.getElementById('inputMode').addEventListener('change',(e)=>{currentMode=e.target.value;renderInputFields();updateFromInputs()});
+  document.getElementById('resetBtn').addEventListener('click',()=>{renderInputFields();updateFromInputs();showToast('Inputs reset to defaults','info')});
+  document.getElementById('randomBtn').addEventListener('click',()=>{const dbt=Math.round(Math.random()*40+5);const rh=Math.round(Math.random()*90+5);document.getElementById('inputMode').value='DBT_RH';currentMode='DBT_RH';renderInputFields();document.getElementById('inputA').value=dbt;document.getElementById('inputB').value=rh;updateFromInputs();showToast('Random state: '+dbt+'°C, '+rh+'% RH','info')});
+  document.querySelectorAll('.preset-btn').forEach(btn=>{btn.addEventListener('click',()=>{const dbt=parseFloat(btn.dataset.dbt);if(btn.dataset.rh){document.getElementById('inputMode').value='DBT_RH';currentMode='DBT_RH';renderInputFields();document.getElementById('inputA').value=dbt;document.getElementById('inputB').value=btn.dataset.rh}else if(btn.dataset.wbt){document.getElementById('inputMode').value='DBT_WBT';currentMode='DBT_WBT';renderInputFields();document.getElementById('inputA').value=dbt;document.getElementById('inputB').value=btn.dataset.wbt}updateFromInputs()})});
+  document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderProblems(btn.dataset.filter)})});
+  let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(currentState)drawChart(document.getElementById('psychChart'),currentState);drawTutorialChart();updateProcessChart()},150)});
+  const observer=new IntersectionObserver((entries)=>{entries.forEach(entry=>{if(entry.isIntersecting)entry.target.classList.add('visible')})},{threshold:0.1});
+  document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+});
+</script>
+</body>
+</html>
