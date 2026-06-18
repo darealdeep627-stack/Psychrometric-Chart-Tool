@@ -70,6 +70,33 @@
   .legend-dot{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:8px;vertical-align:middle}
   .legend-line{display:inline-block;width:12px;height:0;border-top:2px solid;margin-right:8px;vertical-align:middle}
   .formula{font-family:'JetBrains Mono',monospace;background:rgba(10,9,8,.6);border:1px solid var(--border);border-radius:6px;padding:12px 16px;color:var(--amber-bright);font-size:13px;overflow-x:auto}
+  
+  /* Prominent Unit Toggle */
+  .unit-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(10, 9, 8, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .unit-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: var(--muted);
+    border: none;
+  }
+  .unit-btn.active {
+    background: var(--amber-bright);
+    color: var(--bg);
+  }
+  
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -86,11 +113,17 @@
         <div class="text-xs" style="color:var(--muted)">Interactive Thermodynamics</div>
       </div>
     </a>
-    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium">
       <a href="#tutorial" class="nav-link">Tutorial</a>
       <a href="#chart" class="nav-link">Interactive Chart</a>
       <a href="#process" class="nav-link">Process Analysis</a>
       <a href="#problems" class="nav-link">Problem Solving</a>
+      
+      <div class="unit-toggle">
+        <button id="nav_btn_si" onclick="setUnitSystem('SI')" class="unit-btn active">SI</button>
+        <button id="nav_btn_ip" onclick="setUnitSystem('IP')" class="unit-btn">IP</button>
+      </div>
+      
       <a href="#chart" class="btn btn-primary text-sm">Launch Tool</a>
     </div>
     <button class="md:hidden text-xl" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
@@ -102,6 +135,13 @@
     <a href="#chart" class="block py-2 nav-link">Interactive Chart</a>
     <a href="#process" class="block py-2 nav-link">Process Analysis</a>
     <a href="#problems" class="block py-2 nav-link">Problem Solving</a>
+    <div class="flex items-center gap-2 mt-4">
+      <span class="text-xs uppercase tracking-wider" style="color:var(--muted)">Units:</span>
+      <div class="unit-toggle">
+        <button id="mob_btn_si" onclick="setUnitSystem('SI')" class="unit-btn active">SI</button>
+        <button id="mob_btn_ip" onclick="setUnitSystem('IP')" class="unit-btn">IP</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -111,7 +151,7 @@
     <div class="grid lg:grid-cols-2 gap-12 items-center">
       <div>
         <div class="section-eyebrow mb-6">
-          <i class="fa-solid fa-flask"></i> SEA-LEVEL · 101.325 kPa
+          <i class="fa-solid fa-flask"></i> <span id="heroUnitText">SEA-LEVEL · 101.325 kPa</span>
         </div>
         <h1 class="font-display text-6xl md:text-7xl font-black leading-[0.95] tracking-tight mb-6">
           Master the<br>
@@ -177,7 +217,8 @@
           <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(251,191,36,.15);color:var(--amber-bright)">1</div><div><div class="font-semibold mb-1">Horizontal axis — Dry-bulb temperature</div><div class="text-sm" style="color:var(--muted)">The "regular" air temperature measured by a thermometer. Increases left to right.</div></div></div>
           <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(94,234,212,.15);color:var(--teal)">2</div><div><div class="font-semibold mb-1">Vertical axis — Humidity ratio</div><div class="text-sm" style="color:var(--muted)">Mass of water vapor per kg of dry air. Increases bottom to top.</div></div></div>
           <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(251,146,60,.15);color:var(--orange)">3</div><div><div class="font-semibold mb-1">Curved boundary — Saturation line</div><div class="text-sm" style="color:var(--muted)">The upper-left curve is 100% RH. All possible air states lie below it.</div></div></div>
-          <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(134,239,172,.15);color:var(--green)">4</div><div><div class="font-semibold mb-1">Diagonal lines — Wet-bulb & enthalpy</div><div class="text-sm" style="color:var(--muted)">Lines sloping down-right are constant wet-bulb (and nearly constant enthalpy).</div></div></div>
+          <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(103,232,249,.15);color:var(--cyan)">4</div><div><div class="font-semibold mb-1">Diagonal lines — Wet-bulb temperature</div><div class="text-sm" style="color:var(--muted)">Lines sloping down-right represent constant wet-bulb temperature.</div></div></div>
+          <div class="flex gap-4"><div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-mono font-bold" style="background:rgba(251,146,60,.25);color:var(--orange)">5</div><div><div class="font-semibold mb-1">Steep diagonals — Enthalpy (Total Heat)</div><div class="text-sm" style="color:var(--muted)">Enthalpy lines run almost parallel to wet-bulb lines but are slightly steeper. They are typically labeled on the upper-left or outer scale. To read enthalpy, locate your state point and trace parallel to the enthalpy lines back to the enthalpy scale.</div></div></div>
         </div>
         <div>
           <div class="chart-container" style="aspect-ratio:1/1"><canvas id="tutorialChart" style="width:100%;height:100%;display:block"></canvas></div>
@@ -210,10 +251,14 @@
     <div class="grid lg:grid-cols-[1fr_360px] gap-6">
       <div class="card p-4">
         <div class="flex flex-wrap items-center justify-between mb-3 px-2 gap-3">
-          <div class="flex items-center gap-3 text-sm">
-            <span style="color:var(--muted)">Pressure:</span><span class="font-mono" style="color:var(--amber-bright)">101.325 kPa</span>
-            <span class="opacity-30">|</span>
-            <span style="color:var(--muted)">Elevation:</span><span class="font-mono">Sea Level</span>
+          <div class="flex items-center gap-3 text-sm flex-wrap">
+            <span style="color:var(--muted)">Pressure:</span><span id="pressureDisplay" class="font-mono" style="color:var(--amber-bright)">101.325 kPa</span>
+            <span class="opacity-30 hidden md:inline">|</span>
+            <span class="hidden md:inline" style="color:var(--muted)">Units:</span>
+            <div class="unit-toggle hidden md:flex">
+              <button id="chart_btn_si" onclick="setUnitSystem('SI')" class="unit-btn active">SI</button>
+              <button id="chart_btn_ip" onclick="setUnitSystem('IP')" class="unit-btn">IP</button>
+            </div>
           </div>
           <div class="flex items-center gap-2 text-xs flex-wrap" style="color:var(--muted)">
             <span><span class="legend-line" style="border-color:var(--amber-bright)"></span>Saturation</span>
@@ -232,7 +277,13 @@
 
       <div class="space-y-5">
         <div class="card p-5">
-          <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--muted)">Known Properties</div>
+          <div class="flex justify-between items-center mb-3">
+            <div class="text-xs uppercase tracking-wider" style="color:var(--muted)">Known Properties</div>
+            <div class="unit-toggle">
+              <button id="side_btn_si" onclick="setUnitSystem('SI')" class="unit-btn active">SI</button>
+              <button id="side_btn_ip" onclick="setUnitSystem('IP')" class="unit-btn">IP</button>
+            </div>
+          </div>
           <select id="inputMode" class="input-field">
             <option value="DBT_RH">Dry-Bulb Temp + Relative Humidity</option>
             <option value="DBT_WBT">Dry-Bulb Temp + Wet-Bulb Temp</option>
@@ -297,7 +348,7 @@
           <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--cyan)">State 1 (Entering)</div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="text-xs block mb-1" style="color:var(--muted)">DBT (°C)</label>
+              <label id="lbl_p_dbt1" class="text-xs block mb-1" style="color:var(--muted)">DBT (°C)</label>
               <input id="p_dbt1" type="number" class="input-field" value="30" step="0.1">
             </div>
             <div>
@@ -311,7 +362,7 @@
           <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--orange)">State 2 (Leaving)</div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="text-xs block mb-1" style="color:var(--muted)">DBT (°C)</label>
+              <label id="lbl_p_dbt2" class="text-xs block mb-1" style="color:var(--muted)">DBT (°C)</label>
               <input id="p_dbt2" type="number" class="input-field" value="15" step="0.1">
             </div>
             <div>
@@ -348,6 +399,7 @@
       <div class="section-eyebrow mb-4"><i class="fa-solid fa-pen-ruler"></i> Practice Library</div>
       <h2 class="font-display text-5xl md:text-6xl font-black mb-4">Solve problems.</h2>
       <p class="text-lg max-w-2xl" style="color:var(--muted)">Work through real HVAC problems. Enter your answer, get instant feedback, or load the givens directly into the interactive chart.</p>
+      <p class="text-xs mt-2" style="color:var(--muted)"><i class="fa-solid fa-circle-info mr-1"></i> Problem statements are in SI units. Input fields and answers will adapt to your selected unit system.</p>
     </div>
 
     <div class="flex flex-wrap gap-2 mb-8">
@@ -375,8 +427,8 @@
         <div class="text-xs uppercase tracking-wider mb-3" style="color:var(--muted)">Reference</div>
         <ul class="space-y-2 text-sm">
           <li>ASHRAE Handbook — Fundamentals</li>
-          <li>Sea-level pressure: 101.325 kPa</li>
-          <li>SI units throughout</li>
+          <li>Sea-level pressure: 101.325 kPa / 14.696 psia</li>
+          <li>Supports both SI and IP (English) units</li>
           <li>Magnus saturation formula</li>
         </ul>
       </div>
@@ -403,31 +455,42 @@
 </div>
 
 <script>
-const P_ATM=101.325,R_DA=0.287042,C_PA=1.006,C_PW=1.86,H_FG0=2501;
+const P_ATM_KPA=101.325, R_DA=0.287042, C_PA=1.006, C_PW=1.86, H_FG0=2501;
+let currentUnitSystem = 'SI';
+
+// Unit Conversion Helpers
+function toIP_T(C) { return C * 1.8 + 32; }
+function toSI_T(F) { return (F - 32) / 1.8; }
+function toIP_W(W) { return W * 7000; } // gr/lb
+function toSI_W(gr) { return gr / 7000; }
+function toIP_h(h) { return h / 2.326; } // Btu/lb
+function toSI_h(Btu) { return Btu * 2.326; }
+function toIP_v(v) { return v * 16.018; } // ft³/lb
+function toIP_P(P) { return P * 0.145038; } // psia
 
 function pws(T){if(T<-60)return 0;return 0.61094*Math.exp(17.625*T/(T+243.04))}
-function wFromPw(Pw){return 0.621945*Pw/(P_ATM-Pw)}
-function pwFromW(W){return P_ATM*W/(0.621945+W)}
+function wFromPw(Pw){return 0.621945*Pw/(P_ATM_KPA-Pw)}
+function pwFromW(W){return P_ATM_KPA*W/(0.621945+W)}
 function dewPoint(Pw){if(Pw<=0)return -100;const a=Math.log(Pw/0.61094);return 243.04*a/(17.625-a)}
 function wetBulbFromDBT_W(DBT,W){
   const Pw=pwFromW(W);if(Pw<=0)return -100;
   let lo=-50,hi=DBT;
-  for(let i=0;i<80;i++){const mid=(lo+hi)/2;const A=0.00066*(1+0.00115*mid);const fMid=pws(mid)-A*P_ATM*(DBT-mid)-Pw;if(fMid<0)lo=mid;else hi=mid}
+  for(let i=0;i<80;i++){const mid=(lo+hi)/2;const A=0.00066*(1+0.00115*mid);const fMid=pws(mid)-A*P_ATM_KPA*(DBT-mid)-Pw;if(fMid<0)lo=mid;else hi=mid}
   return (lo+hi)/2;
 }
 function computeFromDBT_W(DBT,W){
   const Pw=pwFromW(W),Pws_val=pws(DBT);
   const RH=Math.max(0,Math.min(100,Pw/Pws_val*100));
   const h=C_PA*DBT+W*(H_FG0+C_PW*DBT);
-  const v=R_DA*(DBT+273.15)*(1+1.607858*W)/P_ATM;
+  const v=R_DA*(DBT+273.15)*(1+1.607858*W)/P_ATM_KPA;
   const DPT=dewPoint(Pw),WBT=wetBulbFromDBT_W(DBT,W);
   return {DBT,W,RH,h,v,DPT,WBT,Pw,Pws:Pws_val};
 }
-function computeState(mode,a,b){
+function computeState(mode,a,b){ // Always expects SI inputs
   let DBT,W;
   switch(mode){
     case 'DBT_RH':DBT=a;W=wFromPw(b/100*pws(a));break;
-    case 'DBT_WBT':{DBT=a;const WBT=b;const A=0.00066*(1+0.00115*WBT);const Pw=pws(WBT)-A*P_ATM*(DBT-WBT);W=wFromPw(Math.max(0.0001,Pw));break}
+    case 'DBT_WBT':{DBT=a;const WBT=b;const A=0.00066*(1+0.00115*WBT);const Pw=pws(WBT)-A*P_ATM_KPA*(DBT-WBT);W=wFromPw(Math.max(0.0001,Pw));break}
     case 'DBT_W':DBT=a;W=b;break;
     case 'DBT_DPT':DBT=a;W=wFromPw(pws(b));break;
     case 'DBT_h':{DBT=a;const h=b;W=(h-C_PA*DBT)/(H_FG0+C_PW*DBT);break}
@@ -449,6 +512,7 @@ function setupCanvas(canvas,w,h){
 
 function drawChart(canvas,statePoint,opts){
   opts=opts||{};
+  const sys = opts.unitSystem || 'SI';
   const W=canvas.clientWidth||800,H=canvas.clientHeight||600;
   const ctx=setupCanvas(canvas,W,H);
   const cfg=chartConfig;
@@ -469,21 +533,37 @@ function drawChart(canvas,statePoint,opts){
   ctx.strokeStyle='rgba(134,239,172,0.18)';ctx.lineWidth=1;
   for(let v=0.80;v<=0.95;v+=0.01){
     ctx.beginPath();let started=false;
-    for(let t=0;t<=50;t+=0.5){const wv=(v*P_ATM*1000/(287.042*(t+273.15))-1)/1.607858;if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
+    for(let t=0;t<=50;t+=0.5){const wv=(v*P_ATM_KPA*1000/(287.042*(t+273.15))-1)/1.607858;if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
     ctx.stroke();
   }
 
-  ctx.strokeStyle='rgba(251,146,60,0.2)';ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(251,146,60,0.25)';ctx.lineWidth=1;
+  ctx.font='9px JetBrains Mono';ctx.fillStyle='rgba(251,146,60,0.7)';
   for(let h=10;h<=120;h+=10){
-    ctx.beginPath();let started=false;
-    for(let t=0;t<=50;t+=0.5){const wv=(h-C_PA*t)/(H_FG0+C_PW*t);if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
+    ctx.beginPath();let started=false;let labelX=-1,labelY=-1;
+    for(let t=0;t<=50;t+=0.5){
+      const wv=(h-C_PA*t)/(H_FG0+C_PW*t);
+      if(wv<0||wv>cfg.wMax)continue;
+      const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;
+      const x=dbtToX(t),y=wToY(wv);
+      if(!started){ctx.moveTo(x,y);started=true;labelX=x;labelY=y}else ctx.lineTo(x,y);
+    }
     ctx.stroke();
+    if(labelX>-1){
+      ctx.save();
+      ctx.translate(labelX+4,labelY-4);
+      ctx.rotate(-Math.PI/4);
+      let hLabel = h.toString();
+      if (sys === 'IP') hLabel = (h/2.326).toFixed(0);
+      ctx.fillText(hLabel,0,0);
+      ctx.restore();
+    }
   }
 
   ctx.strokeStyle='rgba(103,232,249,0.18)';ctx.lineWidth=1;
   for(let wbt=0;wbt<=40;wbt+=5){
     ctx.beginPath();let started=false;
-    for(let t=wbt;t<=50;t+=0.5){const A=0.00066*(1+0.00115*wbt);const Pw=pws(wbt)-A*P_ATM*(t-wbt);if(Pw<=0)continue;const wv=wFromPw(Pw);if(wv>cfg.wMax)break;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
+    for(let t=wbt;t<=50;t+=0.5){const A=0.00066*(1+0.00115*wbt);const Pw=pws(wbt)-A*P_ATM_KPA*(t-wbt);if(Pw<=0)continue;const wv=wFromPw(Pw);if(wv>cfg.wMax)break;const x=dbtToX(t),y=wToY(wv);if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)}
     ctx.stroke();
   }
 
@@ -515,14 +595,35 @@ function drawChart(canvas,statePoint,opts){
   ctx.strokeStyle='rgba(168,162,158,0.6)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cfg.chartL,cfg.chartT);ctx.lineTo(cfg.chartL,cfg.chartB);ctx.lineTo(cfg.chartR,cfg.chartB);ctx.stroke();
 
   ctx.fillStyle='#a39b8e';ctx.font='11px JetBrains Mono';ctx.textAlign='center';
-  for(let t=0;t<=50;t+=5){const x=dbtToX(t);ctx.fillText(t.toString(),x,cfg.chartB+18);ctx.strokeStyle='rgba(168,162,158,0.6)';ctx.beginPath();ctx.moveTo(x,cfg.chartB);ctx.lineTo(x,cfg.chartB+5);ctx.stroke()}
-  ctx.fillStyle='#f5efe6';ctx.font='600 12px DM Sans';ctx.fillText('Dry-Bulb Temperature (°C)',(cfg.chartL+cfg.chartR)/2,cfg.chartB+42);
+  for(let t=0;t<=50;t+=5){
+    const x=dbtToX(t);
+    let label = t.toString();
+    if (sys === 'IP') label = (t * 1.8 + 32).toFixed(0);
+    ctx.fillText(label, x, cfg.chartB+18);
+    ctx.strokeStyle='rgba(168,162,158,0.6)';ctx.beginPath();ctx.moveTo(x,cfg.chartB);ctx.lineTo(x,cfg.chartB+5);ctx.stroke();
+  }
+  ctx.fillStyle='#f5efe6';ctx.font='600 12px DM Sans';
+  let xTitle = 'Dry-Bulb Temperature (°C)';
+  if (sys === 'IP') xTitle = 'Dry-Bulb Temperature (°F)';
+  ctx.fillText(xTitle, (cfg.chartL+cfg.chartR)/2, cfg.chartB+42);
 
   ctx.textAlign='right';ctx.fillStyle='#a39b8e';ctx.font='11px JetBrains Mono';
-  for(let wv=0;wv<=0.030;wv+=0.005){const y=wToY(wv);ctx.fillText(wv.toFixed(3),cfg.chartL-8,y+4);ctx.strokeStyle='rgba(168,162,158,0.6)';ctx.beginPath();ctx.moveTo(cfg.chartL,y);ctx.lineTo(cfg.chartL-5,y);ctx.stroke()}
-  ctx.save();ctx.translate(18,(cfg.chartT+cfg.chartB)/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillStyle='#f5efe6';ctx.font='600 12px DM Sans';ctx.fillText('Humidity Ratio W (kg/kg)',0,0);ctx.restore();
+  for(let wv=0;wv<=0.030;wv+=0.005){
+    const y=wToY(wv);
+    let label = wv.toFixed(3);
+    if (sys === 'IP') label = (wv * 7000).toFixed(0);
+    ctx.fillText(label, cfg.chartL-8, y+4);
+    ctx.strokeStyle='rgba(168,162,158,0.6)';ctx.beginPath();ctx.moveTo(cfg.chartL,y);ctx.lineTo(cfg.chartL-5,y);ctx.stroke();
+  }
+  ctx.save();ctx.translate(18,(cfg.chartT+cfg.chartB)/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillStyle='#f5efe6';ctx.font='600 12px DM Sans';
+  let yTitle = 'Humidity Ratio W (kg/kg)';
+  if (sys === 'IP') yTitle = 'Humidity Ratio W (gr/lb)';
+  ctx.fillText(yTitle,0,0);ctx.restore();
 
-  ctx.textAlign='right';ctx.fillStyle='rgba(245,239,230,0.4)';ctx.font='10px JetBrains Mono';ctx.fillText('PSYCHROMETRIC CHART · SEA LEVEL · 101.325 kPa',cfg.chartR-5,cfg.chartT-15);
+  ctx.textAlign='right';ctx.fillStyle='rgba(245,239,230,0.4)';ctx.font='10px JetBrains Mono';
+  let pTitle = 'PSYCHROMETRIC CHART · SEA LEVEL · 101.325 kPa';
+  if (sys === 'IP') pTitle = 'PSYCHROMETRIC CHART · SEA LEVEL · 14.696 psia';
+  ctx.fillText(pTitle, cfg.chartR-5, cfg.chartT-15);
 
   if(statePoint&&isFinite(statePoint.DBT)&&isFinite(statePoint.W)){
     const sp=statePoint;const x=dbtToX(sp.DBT),y=wToY(sp.W);
@@ -532,34 +633,53 @@ function drawChart(canvas,statePoint,opts){
       for(let t=0;t<=50;t+=0.2){const wv=wFromPw((sp.RH/100)*pws(t));if(wv>cfg.wMax)continue;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
       ctx.stroke();
     }
+    
     if(sp.WBT>-50){
       ctx.strokeStyle='rgba(103,232,249,0.85)';ctx.lineWidth=2;ctx.beginPath();let st=false;
-      for(let t=sp.WBT;t<=50;t+=0.3){const A=0.00066*(1+0.00115*sp.WBT);const Pw=pws(sp.WBT)-A*P_ATM*(t-sp.WBT);if(Pw<=0)continue;const wv=wFromPw(Pw);if(wv>cfg.wMax)break;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
+      for(let t=sp.WBT;t<=50;t+=0.3){const A=0.00066*(1+0.00115*sp.WBT);const Pw=pws(sp.WBT)-A*P_ATM_KPA*(t-sp.WBT);if(Pw<=0)continue;const wv=wFromPw(Pw);if(wv>cfg.wMax)break;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
       ctx.stroke();
     }
-    ctx.strokeStyle='rgba(251,146,60,0.85)';ctx.lineWidth=2;ctx.beginPath();let st=false;
-    for(let t=0;t<=50;t+=0.3){const wv=(sp.h-C_PA*t)/(H_FG0+C_PW*t);if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
+    
+    ctx.strokeStyle='rgba(251,146,60,0.95)';ctx.lineWidth=2.2;ctx.beginPath();let st=false;let hLabelX=-1,hLabelY=-1;
+    for(let t=0;t<=50;t+=0.3){
+      const wv=(sp.h-C_PA*t)/(H_FG0+C_PW*t);
+      if(wv<0||wv>cfg.wMax)continue;
+      const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;
+      const px=dbtToX(t),py=wToY(wv);
+      if(!st){ctx.moveTo(px,py);st=true;hLabelX=px;hLabelY=py}else ctx.lineTo(px,py);
+    }
     ctx.stroke();
+    if(hLabelX>-1){
+      ctx.save();
+      ctx.font='600 10px JetBrains Mono';ctx.fillStyle='#fb923c';
+      ctx.translate(hLabelX+5,hLabelY-5);ctx.rotate(-Math.PI/4);
+      let hText = 'h = ' + sp.h.toFixed(1) + ' kJ/kg';
+      if (sys === 'IP') hText = 'h = ' + toIP_h(sp.h).toFixed(1) + ' Btu/lb';
+      ctx.fillText(hText,0,0);
+      ctx.restore();
+    }
+
     ctx.strokeStyle='rgba(134,239,172,0.8)';ctx.lineWidth=2;ctx.beginPath();st=false;
-    for(let t=0;t<=50;t+=0.3){const wv=(sp.v*P_ATM*1000/(287.042*(t+273.15))-1)/1.607858;if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
+    for(let t=0;t<=50;t+=0.3){const wv=(sp.v*P_ATM_KPA*1000/(287.042*(t+273.15))-1)/1.607858;if(wv<0||wv>cfg.wMax)continue;const Wsat=wFromPw(pws(t));if(wv>Wsat)continue;const px=dbtToX(t),py=wToY(wv);if(!st){ctx.moveTo(px,py);st=true}else ctx.lineTo(px,py)}
     ctx.stroke();
 
     ctx.strokeStyle='rgba(251,191,36,0.5)';ctx.lineWidth=1.2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,cfg.chartB);ctx.moveTo(x,y);ctx.lineTo(cfg.chartL,y);ctx.stroke();ctx.setLineDash([]);
 
     ctx.shadowColor='#fbbf24';ctx.shadowBlur=18;ctx.fillStyle='#fde68a';ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#0a0908';ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
 
-    const label=sp.DBT.toFixed(1)+'°C · '+(sp.W*1000).toFixed(2)+' g/kg';
-    ctx.font='600 11px JetBrains Mono';const tw=ctx.measureText(label).width;
+    let ptLabel = sp.DBT.toFixed(1)+'°C · '+(sp.W*1000).toFixed(2)+' g/kg';
+    if (sys === 'IP') ptLabel = toIP_T(sp.DBT).toFixed(1)+'°F · '+toIP_W(sp.W).toFixed(1)+' gr/lb';
+    ctx.font='600 11px JetBrains Mono';const tw=ctx.measureText(ptLabel).width;
     const tx=Math.min(x+12,cfg.chartR-tw-12),ty=Math.max(y-28,cfg.chartT+8);
     ctx.fillStyle='rgba(10,9,8,0.92)';ctx.strokeStyle='#fbbf24';ctx.lineWidth=1;ctx.fillRect(tx,ty,tw+14,22);ctx.strokeRect(tx,ty,tw+14,22);
-    ctx.fillStyle='#fde68a';ctx.textAlign='left';ctx.fillText(label,tx+7,ty+15);
+    ctx.fillStyle='#fde68a';ctx.textAlign='left';ctx.fillText(ptLabel,tx+7,ty+15);
   }
 }
 
 function drawProcessChart(canvas, s1, s2) {
   const W = canvas.clientWidth || 800, H = canvas.clientHeight || 600;
   setupCanvas(canvas, W, H);
-  drawChart(canvas, null, { showComfort: true });
+  drawChart(canvas, null, { showComfort: true, unitSystem: currentUnitSystem });
   
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
@@ -577,12 +697,8 @@ function drawProcessChart(canvas, s1, s2) {
   ctx.shadowColor = 'rgba(244, 114, 182, 0.4)';
   ctx.shadowBlur = 10;
   ctx.setLineDash([6, 4]);
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.shadowBlur = 0;
+  ctx.beginPath();ctx.moveTo(x1, y1);ctx.lineTo(x2, y2);ctx.stroke();
+  ctx.setLineDash([]);ctx.shadowBlur = 0;
 
   ctx.shadowColor = '#67e8f9'; ctx.shadowBlur = 15; ctx.fillStyle = '#67e8f9';
   ctx.beginPath(); ctx.arc(x1, y1, 8, 0, Math.PI * 2); ctx.fill();
@@ -594,25 +710,27 @@ function drawProcessChart(canvas, s1, s2) {
   ctx.shadowBlur = 0; ctx.fillStyle = '#0a0908';
   ctx.beginPath(); ctx.arc(x2, y2, 3, 0, Math.PI * 2); ctx.fill();
 
-  ctx.font = '600 12px JetBrains Mono';
-  ctx.fillStyle = '#67e8f9';
-  ctx.textAlign = 'left';
-  ctx.fillText('State 1 (' + s1.DBT.toFixed(1) + '°C, ' + s1.RH.toFixed(0) + '%)', x1 + 12, y1 - 8);
+  ctx.font = '600 12px JetBrains Mono';ctx.fillStyle = '#67e8f9';ctx.textAlign = 'left';
+  let s1Label = 'State 1 (' + s1.DBT.toFixed(1) + '°C, ' + s1.RH.toFixed(0) + '%)';
+  if (currentUnitSystem === 'IP') s1Label = 'State 1 (' + toIP_T(s1.DBT).toFixed(1) + '°F, ' + s1.RH.toFixed(0) + '%)';
+  ctx.fillText(s1Label, x1 + 12, y1 - 8);
   
+  let s2Label = 'State 2 (' + s2.DBT.toFixed(1) + '°C, ' + s2.RH.toFixed(0) + '%)';
+  if (currentUnitSystem === 'IP') s2Label = 'State 2 (' + toIP_T(s2.DBT).toFixed(1) + '°F, ' + s2.RH.toFixed(0) + '%)';
   ctx.fillStyle = '#fb923c';
-  ctx.fillText('State 2 (' + s2.DBT.toFixed(1) + '°C, ' + s2.RH.toFixed(0) + '%)', x2 + 12, y2 - 8);
+  ctx.fillText(s2Label, x2 + 12, y2 - 8);
 }
 
 const propertiesData=[
-  {symbol:'DBT',name:'Dry-Bulb Temperature',unit:'°C',icon:'fa-temperature-half',color:'var(--amber-bright)',desc:'The ordinary air temperature measured by a standard thermometer shielded from radiation.',formula:'Independent variable on the x-axis',detail:'It does not account for moisture. Ranges typically from -10°C to 50°C in HVAC work.'},
-  {symbol:'WBT',name:'Wet-Bulb Temperature',unit:'°C',icon:'fa-temperature-low',color:'var(--cyan)',desc:'Temperature read by a thermometer wrapped in wet wick, ventilated until equilibrium.',formula:'Pw = Pws(WBT) − A·P·(DBT − WBT)',detail:'Approximates the temperature air reaches during adiabatic saturation. Constant-WBT lines slope down-right.'},
-  {symbol:'DPT',name:'Dew-Point Temperature',unit:'°C',icon:'fa-droplet',color:'var(--teal)',desc:'Temperature at which moisture begins to condense when air is cooled at constant pressure.',formula:'Tdp = 243.04·α / (17.625 − α)',detail:'A horizontal line on the chart (constant W). Below DPT, condensation occurs.'},
+  {symbol:'DBT',name:'Dry-Bulb Temperature',unit:'°C / °F',icon:'fa-temperature-half',color:'var(--amber-bright)',desc:'The ordinary air temperature measured by a standard thermometer shielded from radiation.',formula:'Independent variable on the x-axis',detail:'It does not account for moisture. Ranges typically from -10°C to 50°C (14°F to 122°F) in HVAC work.'},
+  {symbol:'WBT',name:'Wet-Bulb Temperature',unit:'°C / °F',icon:'fa-temperature-low',color:'var(--cyan)',desc:'Temperature read by a thermometer wrapped in wet wick, ventilated until equilibrium.',formula:'Pw = Pws(WBT) − A·P·(DBT − WBT)',detail:'Approximates the temperature air reaches during adiabatic saturation. Constant-WBT lines slope down-right.'},
+  {symbol:'DPT',name:'Dew-Point Temperature',unit:'°C / °F',icon:'fa-droplet',color:'var(--teal)',desc:'Temperature at which moisture begins to condense when air is cooled at constant pressure.',formula:'Tdp = 243.04·α / (17.625 − α)',detail:'A horizontal line on the chart (constant W). Below DPT, condensation occurs.'},
   {symbol:'RH',name:'Relative Humidity',unit:'%',icon:'fa-percent',color:'var(--teal)',desc:'Ratio of actual vapor pressure to saturation vapor pressure at the same temperature.',formula:'RH = Pw / Pws(DBT) × 100',detail:'Curved lines emanating from the lower-left. 100% RH is the saturation boundary.'},
-  {symbol:'W',name:'Humidity Ratio',unit:'kg/kg',icon:'fa-cloud',color:'var(--amber)',desc:'Mass of water vapor per unit mass of dry air.',formula:'W = 0.621945 · Pw / (P − Pw)',detail:'Also called specific humidity. Plotted on the y-axis. Typical range 0–0.030 kg/kg.'},
-  {symbol:'h',name:'Enthalpy',unit:'kJ/kg',icon:'fa-fire-flame-curved',color:'var(--orange)',desc:'Total heat content of moist air per kg of dry air.',formula:'h = 1.006·T + W·(2501 + 1.86·T)',detail:'Lines slope down-right, nearly parallel to wet-bulb lines. Change in h = heat added/removed.'},
-  {symbol:'v',name:'Specific Volume',unit:'m³/kg',icon:'fa-expand',color:'var(--green)',desc:'Volume occupied by 1 kg of dry air plus its associated moisture.',formula:'v = R·(T+273.15)·(1+1.6078·W) / P',detail:'Steeper diagonal lines. Used to convert mass flow to volumetric flow for fan sizing.'},
-  {symbol:'Pw',name:'Vapor Pressure',unit:'kPa',icon:'fa-gauge-high',color:'var(--amber-bright)',desc:'Partial pressure exerted by water vapor in the air mixture.',formula:'Pw = P · W / (0.621945 + W)',detail:'Directly related to W. Determines boiling, evaporation, condensation behavior.'},
-  {symbol:'Pws',name:'Saturation Pressure',unit:'kPa',icon:'fa-water',color:'var(--cyan)',desc:'Maximum pressure water vapor can exert at a given temperature.',formula:'Pws(T) = 0.61094 · exp(17.625·T / (T+243.04))',detail:'The Magnus approximation. At 20°C, Pws ≈ 2.34 kPa. At 30°C, ≈ 4.25 kPa.'}
+  {symbol:'W',name:'Humidity Ratio',unit:'kg/kg / gr/lb',icon:'fa-cloud',color:'var(--amber)',desc:'Mass of water vapor per unit mass of dry air.',formula:'W = 0.621945 · Pw / (P − Pw)',detail:'Also called specific humidity. Plotted on the y-axis. Typical range 0–0.030 kg/kg (0–210 gr/lb).'},
+  {symbol:'h',name:'Enthalpy',unit:'kJ/kg / Btu/lb',icon:'fa-fire-flame-curved',color:'var(--orange)',desc:'Total heat content of moist air per kg of dry air.',formula:'h = 1.006·T + W·(2501 + 1.86·T)',detail:'Lines slope down-right, nearly parallel to wet-bulb lines. Change in h = heat added/removed.'},
+  {symbol:'v',name:'Specific Volume',unit:'m³/kg / ft³/lb',icon:'fa-expand',color:'var(--green)',desc:'Volume occupied by 1 kg of dry air plus its associated moisture.',formula:'v = R·(T+273.15)·(1+1.6078·W) / P',detail:'Steeper diagonal lines. Used to convert mass flow to volumetric flow for fan sizing.'},
+  {symbol:'Pw',name:'Vapor Pressure',unit:'kPa / psia',icon:'fa-gauge-high',color:'var(--amber-bright)',desc:'Partial pressure exerted by water vapor in the air mixture.',formula:'Pw = P · W / (0.621945 + W)',detail:'Directly related to W. Determines boiling, evaporation, condensation behavior.'},
+  {symbol:'Pws',name:'Saturation Pressure',unit:'kPa / psia',icon:'fa-water',color:'var(--cyan)',desc:'Maximum pressure water vapor can exert at a given temperature.',formula:'Pws(T) = 0.61094 · exp(17.625·T / (T+243.04))',detail:'The Magnus approximation. At 20°C, Pws ≈ 2.34 kPa. At 30°C, ≈ 4.25 kPa.'}
 ];
 
 function renderPropertiesGrid(){
@@ -623,7 +741,7 @@ function renderPropertiesGrid(){
 function drawTutorialChart(){
   const canvas=document.getElementById('tutorialChart');if(!canvas)return;
   const state=computeFromDBT_W(25,0.01);
-  drawChart(canvas,state,{showComfort:false});
+  drawChart(canvas,state,{showComfort:false, unitSystem: 'SI'});
 }
 
 let heroAnimId;
@@ -633,7 +751,7 @@ function drawHeroChart(){
   function frame(){
     t+=0.005;const dbt=22+8*Math.sin(t);const rh=50+25*Math.sin(t*0.7+1);
     const state=computeState('DBT_RH',dbt,rh);
-    drawChart(canvas,state,{showComfort:false});
+    drawChart(canvas,state,{showComfort:false, unitSystem: currentUnitSystem});
     heroAnimId=requestAnimationFrame(frame);
   }
   frame();
@@ -641,16 +759,45 @@ function drawHeroChart(){
 
 let currentState=null,currentMode='DBT_RH';
 const modeConfig={
-  DBT_RH:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:25,min:0,max:50,step:0.1},b:{label:'Relative Humidity',unit:'%',def:50,min:0,max:100,step:1}},
-  DBT_WBT:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:30,min:0,max:50,step:0.1},b:{label:'Wet-Bulb Temperature',unit:'°C',def:20,min:-10,max:50,step:0.1}},
-  DBT_W:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:25,min:0,max:50,step:0.1},b:{label:'Humidity Ratio',unit:'kg/kg',def:0.010,min:0,max:0.030,step:0.0005}},
-  DBT_DPT:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:28,min:0,max:50,step:0.1},b:{label:'Dew-Point Temperature',unit:'°C',def:15,min:-20,max:50,step:0.1}},
-  DBT_h:{a:{label:'Dry-Bulb Temperature',unit:'°C',def:25,min:0,max:50,step:0.1},b:{label:'Enthalpy',unit:'kJ/kg',def:50,min:0,max:120,step:0.5}}
+  DBT_RH:{a:{label:'Dry-Bulb Temperature',SI:'°C',IP:'°F',def:25,min:0,max:50,step:0.1},b:{label:'Relative Humidity',SI:'%',IP:'%',def:50,min:0,max:100,step:1}},
+  DBT_WBT:{a:{label:'Dry-Bulb Temperature',SI:'°C',IP:'°F',def:30,min:0,max:50,step:0.1},b:{label:'Wet-Bulb Temperature',SI:'°C',IP:'°F',def:20,min:-10,max:50,step:0.1}},
+  DBT_W:{a:{label:'Dry-Bulb Temperature',SI:'°C',IP:'°F',def:25,min:0,max:50,step:0.1},b:{label:'Humidity Ratio',SI:'kg/kg',IP:'gr/lb',def:0.010,min:0,max:0.030,step:0.0005}},
+  DBT_DPT:{a:{label:'Dry-Bulb Temperature',SI:'°C',IP:'°F',def:28,min:0,max:50,step:0.1},b:{label:'Dew-Point Temperature',SI:'°C',IP:'°F',def:15,min:-20,max:50,step:0.1}},
+  DBT_h:{a:{label:'Dry-Bulb Temperature',SI:'°C',IP:'°F',def:25,min:0,max:50,step:0.1},b:{label:'Enthalpy',SI:'kJ/kg',IP:'Btu/lb',def:50,min:0,max:120,step:0.5}}
 };
 
-function renderInputFields(){
-  const cfg=modeConfig[currentMode];const container=document.getElementById('inputFields');
-  container.innerHTML='<div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+cfg.a.label+'</label><div class="relative"><input id="inputA" type="number" class="input-field pr-12" value="'+cfg.a.def+'" min="'+cfg.a.min+'" max="'+cfg.a.max+'" step="'+cfg.a.step+'"><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono" style="color:var(--muted)">'+cfg.a.unit+'</span></div></div><div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+cfg.b.label+'</label><div class="relative"><input id="inputB" type="number" class="input-field pr-12" value="'+cfg.b.def+'" min="'+cfg.b.min+'" max="'+cfg.b.max+'" step="'+cfg.b.step+'"><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono" style="color:var(--muted)">'+cfg.b.unit+'</span></div></div>';
+function convertToIP(mode, key, val) {
+  const cfg = modeConfig[mode][key];
+  if (cfg.SI === '°C') return val * 1.8 + 32;
+  if (cfg.SI === 'kg/kg') return val * 7000;
+  if (cfg.SI === 'kJ/kg') return val / 2.326;
+  return val;
+}
+
+function renderInputFields(currentA, currentB){
+  const cfg=modeConfig[currentMode];
+  const isIP = currentUnitSystem === 'IP';
+  const unitA = isIP ? cfg.a.IP : cfg.a.SI;
+  const unitB = isIP ? cfg.b.IP : cfg.b.SI;
+  
+  let valA = currentA !== undefined ? currentA : (isIP ? convertToIP(currentMode, 'a', cfg.a.def) : cfg.a.def);
+  let valB = currentB !== undefined ? currentB : (isIP ? convertToIP(currentMode, 'b', cfg.b.def) : cfg.b.def);
+
+  let minA = cfg.a.min, maxA = cfg.a.max, stepA = cfg.a.step;
+  if (isIP) {
+    if (cfg.a.SI === '°C') { minA = cfg.a.min*1.8+32; maxA = cfg.a.max*1.8+32; stepA = 0.1; }
+    else if (cfg.a.SI === 'kg/kg') { minA = cfg.a.min*7000; maxA = cfg.a.max*7000; stepA = 0.1; }
+    else if (cfg.a.SI === 'kJ/kg') { minA = cfg.a.min/2.326; maxA = cfg.a.max/2.326; stepA = 0.1; }
+  }
+  let minB = cfg.b.min, maxB = cfg.b.max, stepB = cfg.b.step;
+  if (isIP) {
+    if (cfg.b.SI === '°C') { minB = cfg.b.min*1.8+32; maxB = cfg.b.max*1.8+32; stepB = 0.1; }
+    else if (cfg.b.SI === 'kg/kg') { minB = cfg.b.min*7000; maxB = cfg.b.max*7000; stepB = 0.1; }
+    else if (cfg.b.SI === 'kJ/kg') { minB = cfg.b.min/2.326; maxB = cfg.b.max/2.326; stepB = 0.1; }
+  }
+
+  const container=document.getElementById('inputFields');
+  container.innerHTML='<div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+cfg.a.label+'</label><div class="relative"><input id="inputA" type="number" class="input-field pr-12" value="'+valA+'" min="'+minA+'" max="'+maxA+'" step="'+stepA+'"><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono" style="color:var(--muted)">'+unitA+'</span></div></div><div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+cfg.b.label+'</label><div class="relative"><input id="inputB" type="number" class="input-field pr-12" value="'+valB+'" min="'+minB+'" max="'+maxB+'" step="'+stepB+'"><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono" style="color:var(--muted)">'+unitB+'</span></div></div>';
   document.getElementById('inputA').addEventListener('input',updateFromInputs);
   document.getElementById('inputB').addEventListener('input',updateFromInputs);
 }
@@ -659,29 +806,55 @@ function updateFromInputs(){
   const a=parseFloat(document.getElementById('inputA').value);
   const b=parseFloat(document.getElementById('inputB').value);
   if(!isFinite(a)||!isFinite(b))return;
-  const state=computeState(currentMode,a,b);if(!state)return;
+  
+  let aSI = a, bSI = b;
+  const cfg = modeConfig[currentMode];
+  if (currentUnitSystem === 'IP') {
+    if (cfg.a.SI === '°C') aSI = (a - 32) / 1.8;
+    else if (cfg.a.SI === 'kg/kg') aSI = a / 7000;
+    else if (cfg.a.SI === 'kJ/kg') aSI = a * 2.326;
+    
+    if (cfg.b.SI === '°C') bSI = (b - 32) / 1.8;
+    else if (cfg.b.SI === 'kg/kg') bSI = b / 7000;
+    else if (cfg.b.SI === 'kJ/kg') bSI = b * 2.326;
+  }
+
+  const state=computeState(currentMode,aSI,bSI);if(!state)return;
   currentState=state;
-  drawChart(document.getElementById('psychChart'),state);
+  drawChart(document.getElementById('psychChart'),state,{unitSystem: currentUnitSystem});
   renderResults(state);
   document.getElementById('statusBadge').textContent='● Live';
   document.getElementById('statusBadge').style.color='var(--green)';
 }
 
 function renderResults(s){
-  const rows=[
-    {label:'Dry-Bulb Temp',value:s.DBT.toFixed(2),unit:'°C',color:'var(--amber-bright)'},
-    {label:'Wet-Bulb Temp',value:s.WBT.toFixed(2),unit:'°C',color:'var(--cyan)'},
-    {label:'Dew-Point Temp',value:s.DPT.toFixed(2),unit:'°C',color:'var(--teal)'},
-    {label:'Relative Humidity',value:s.RH.toFixed(1),unit:'%',color:'var(--teal)'},
-    {label:'Humidity Ratio',value:s.W.toFixed(5),unit:'kg/kg',color:'var(--amber)'},
-    {label:'Enthalpy',value:s.h.toFixed(2),unit:'kJ/kg',color:'var(--orange)'},
-    {label:'Specific Volume',value:s.v.toFixed(4),unit:'m³/kg',color:'var(--green)'},
-    {label:'Vapor Pressure',value:s.Pw.toFixed(3),unit:'kPa',color:'var(--amber-bright)'}
-  ];
+  let rows = [];
+  if (currentUnitSystem === 'SI') {
+    rows = [
+      {label:'Dry-Bulb Temp',value:s.DBT.toFixed(2),unit:'°C',color:'var(--amber-bright)'},
+      {label:'Wet-Bulb Temp',value:s.WBT.toFixed(2),unit:'°C',color:'var(--cyan)'},
+      {label:'Dew-Point Temp',value:s.DPT.toFixed(2),unit:'°C',color:'var(--teal)'},
+      {label:'Relative Humidity',value:s.RH.toFixed(1),unit:'%',color:'var(--teal)'},
+      {label:'Humidity Ratio',value:s.W.toFixed(5),unit:'kg/kg',color:'var(--amber)'},
+      {label:'Enthalpy',value:s.h.toFixed(2),unit:'kJ/kg',color:'var(--orange)'},
+      {label:'Specific Volume',value:s.v.toFixed(4),unit:'m³/kg',color:'var(--green)'},
+      {label:'Vapor Pressure',value:s.Pw.toFixed(3),unit:'kPa',color:'var(--amber-bright)'}
+    ];
+  } else {
+    rows = [
+      {label:'Dry-Bulb Temp',value:toIP_T(s.DBT).toFixed(2),unit:'°F',color:'var(--amber-bright)'},
+      {label:'Wet-Bulb Temp',value:toIP_T(s.WBT).toFixed(2),unit:'°F',color:'var(--cyan)'},
+      {label:'Dew-Point Temp',value:toIP_T(s.DPT).toFixed(2),unit:'°F',color:'var(--teal)'},
+      {label:'Relative Humidity',value:s.RH.toFixed(1),unit:'%',color:'var(--teal)'},
+      {label:'Humidity Ratio',value:toIP_W(s.W).toFixed(1),unit:'gr/lb',color:'var(--amber)'},
+      {label:'Enthalpy',value:toIP_h(s.h).toFixed(2),unit:'Btu/lb',color:'var(--orange)'},
+      {label:'Specific Volume',value:toIP_v(s.v).toFixed(3),unit:'ft³/lb',color:'var(--green)'},
+      {label:'Vapor Pressure',value:toIP_P(s.Pw).toFixed(3),unit:'psia',color:'var(--amber-bright)'}
+    ];
+  }
   document.getElementById('resultsList').innerHTML=rows.map(r=>'<div class="property-pill" style="border-left-color:'+r.color+'"><div><div class="label">'+r.label+'</div><div class="value">'+r.value+' <span style="color:var(--muted);font-size:11px;font-weight:400">'+r.unit+'</span></div></div></div>').join('');
 }
 
-// FIXED CLICK & HOVER INTERACTION MATH
 function setupChartInteraction(){
   const canvas=document.getElementById('psychChart');
   
@@ -690,7 +863,6 @@ function setupChartInteraction(){
     const x=e.clientX-rect.left;
     const y=e.clientY-rect.top;
     
-    // Recalculate bounds locally at the exact moment of the click
     const W=rect.width;
     const H=rect.height;
     const cL=70, cR=W-30, cT=40, cB=H-60;
@@ -705,9 +877,14 @@ function setupChartInteraction(){
     
     document.getElementById('inputMode').value='DBT_W';
     currentMode='DBT_W';
-    renderInputFields();
-    document.getElementById('inputA').value=dbt.toFixed(2);
-    document.getElementById('inputB').value=Wclamped.toFixed(5);
+    
+    let finalDbt = dbt, finalW = Wclamped;
+    if (currentUnitSystem === 'IP') {
+      finalDbt = (dbt * 1.8 + 32);
+      finalW = Wclamped * 7000;
+    }
+    
+    renderInputFields(finalDbt.toFixed(2), finalW.toFixed(2));
     updateFromInputs();
     showToast('State point set by click','info');
   });
@@ -725,7 +902,9 @@ function setupChartInteraction(){
     const w=(cB-y)/(cB-cT)*(chartConfig.wMax-chartConfig.wMin)+chartConfig.wMin;
     
     if(dbt>=chartConfig.dbtMin&&dbt<=chartConfig.dbtMax&&w>=chartConfig.wMin&&w<=chartConfig.wMax){
-      document.getElementById('cursorInfo').textContent='DBT: '+dbt.toFixed(1)+'°C  W: '+w.toFixed(4)+' kg/kg';
+      let cursorText = 'DBT: '+dbt.toFixed(1)+'°C  W: '+w.toFixed(4)+' kg/kg';
+      if (currentUnitSystem === 'IP') cursorText = 'DBT: '+(dbt*1.8+32).toFixed(1)+'°F  W: '+(w*7000).toFixed(1)+' gr/lb';
+      document.getElementById('cursorInfo').textContent = cursorText;
     }else{
       document.getElementById('cursorInfo').textContent='—';
     }
@@ -735,15 +914,21 @@ function setupChartInteraction(){
 }
 
 function updateProcessChart() {
-  const dbt1 = parseFloat(document.getElementById('p_dbt1').value);
-  const rh1 = parseFloat(document.getElementById('p_rh1').value);
-  const dbt2 = parseFloat(document.getElementById('p_dbt2').value);
-  const rh2 = parseFloat(document.getElementById('p_rh2').value);
+  let dbt1 = parseFloat(document.getElementById('p_dbt1').value);
+  let rh1 = parseFloat(document.getElementById('p_rh1').value);
+  let dbt2 = parseFloat(document.getElementById('p_dbt2').value);
+  let rh2 = parseFloat(document.getElementById('p_rh2').value);
 
   if(!isFinite(dbt1)||!isFinite(rh1)||!isFinite(dbt2)||!isFinite(rh2)) return;
 
-  const s1 = computeState('DBT_RH', dbt1, rh1);
-  const s2 = computeState('DBT_RH', dbt2, rh2);
+  let dbt1SI = dbt1, dbt2SI = dbt2;
+  if (currentUnitSystem === 'IP') {
+    dbt1SI = (dbt1 - 32) / 1.8;
+    dbt2SI = (dbt2 - 32) / 1.8;
+  }
+
+  const s1 = computeState('DBT_RH', dbt1SI, rh1);
+  const s2 = computeState('DBT_RH', dbt2SI, rh2);
   
   drawProcessChart(document.getElementById('processChart'), s1, s2);
 
@@ -751,18 +936,35 @@ function updateProcessChart() {
   const dW = s2.W - s1.W;
   const dh = s2.h - s1.h;
 
-  const q_sensible = 1.006 * dDBT; 
-  const q_latent = 2501 * dW;      
-  const q_total = q_sensible + q_latent;
-
-  const rows = [
-    {label:'Δ Dry-Bulb Temp (ΔDBT)', value:dDBT.toFixed(2), unit:'°C', color:'var(--amber-bright)'},
-    {label:'Δ Humidity Ratio (ΔW)', value:(dW*1000).toFixed(2), unit:'g/kg', color:'var(--teal)'},
-    {label:'Δ Enthalpy (Δh)', value:dh.toFixed(2), unit:'kJ/kg', color:'var(--orange)'},
-    {label:'Sensible Heat (Qs)', value:q_sensible.toFixed(2), unit:'kJ/kg', color:'var(--cyan)'},
-    {label:'Latent Heat (Ql)', value:q_latent.toFixed(2), unit:'kJ/kg', color:'var(--green)'},
-    {label:'Total Heat (Qt)', value:q_total.toFixed(2), unit:'kJ/kg', color:'var(--pink)'}
-  ];
+  let rows = [];
+  if (currentUnitSystem === 'SI') {
+    const q_sensible = 1.006 * dDBT; 
+    const q_latent = 2501 * dW;      
+    const q_total = q_sensible + q_latent;
+    rows = [
+      {label:'Δ Dry-Bulb Temp (ΔDBT)', value:dDBT.toFixed(2), unit:'°C', color:'var(--amber-bright)'},
+      {label:'Δ Humidity Ratio (ΔW)', value:(dW*1000).toFixed(2), unit:'g/kg', color:'var(--teal)'},
+      {label:'Δ Enthalpy (Δh)', value:dh.toFixed(2), unit:'kJ/kg', color:'var(--orange)'},
+      {label:'Sensible Heat (Qs)', value:q_sensible.toFixed(2), unit:'kJ/kg', color:'var(--cyan)'},
+      {label:'Latent Heat (Ql)', value:q_latent.toFixed(2), unit:'kJ/kg', color:'var(--green)'},
+      {label:'Total Heat (Qt)', value:q_total.toFixed(2), unit:'kJ/kg', color:'var(--pink)'}
+    ];
+  } else {
+    const dDBT_IP = dDBT * 1.8;
+    const dW_IP = dW * 7000;
+    const dh_IP = dh / 2.326;
+    const q_sensible = 0.24 * dDBT_IP; 
+    const q_latent = 1061 * (dW_IP / 7000); 
+    const q_total = q_sensible + q_latent;
+    rows = [
+      {label:'Δ Dry-Bulb Temp (ΔDBT)', value:dDBT_IP.toFixed(2), unit:'°F', color:'var(--amber-bright)'},
+      {label:'Δ Humidity Ratio (ΔW)', value:dW_IP.toFixed(1), unit:'gr/lb', color:'var(--teal)'},
+      {label:'Δ Enthalpy (Δh)', value:dh_IP.toFixed(2), unit:'Btu/lb', color:'var(--orange)'},
+      {label:'Sensible Heat (Qs)', value:q_sensible.toFixed(2), unit:'Btu/lb', color:'var(--cyan)'},
+      {label:'Latent Heat (Ql)', value:q_latent.toFixed(2), unit:'Btu/lb', color:'var(--green)'},
+      {label:'Total Heat (Qt)', value:q_total.toFixed(2), unit:'Btu/lb', color:'var(--pink)'}
+    ];
+  }
 
   document.getElementById('processResults').innerHTML = rows.map(r => 
     '<div class="property-pill" style="border-left-color:'+r.color+'"><div><div class="label">'+r.label+'</div><div class="value">'+r.value+' <span style="color:var(--muted);font-size:11px;font-weight:400">'+r.unit+'</span></div></div></div>'
@@ -770,11 +972,99 @@ function updateProcessChart() {
 }
 
 function setProcess(dbt1, rh1, dbt2, rh2) {
-  document.getElementById('p_dbt1').value = dbt1;
+  let finalDbt1 = dbt1, finalDbt2 = dbt2;
+  if (currentUnitSystem === 'IP') {
+    finalDbt1 = (dbt1 * 1.8 + 32).toFixed(1);
+    finalDbt2 = (dbt2 * 1.8 + 32).toFixed(1);
+  } else {
+    finalDbt1 = dbt1.toFixed(1);
+    finalDbt2 = dbt2.toFixed(1);
+  }
+  document.getElementById('p_dbt1').value = finalDbt1;
   document.getElementById('p_rh1').value = rh1;
-  document.getElementById('p_dbt2').value = dbt2;
+  document.getElementById('p_dbt2').value = finalDbt2;
   document.getElementById('p_rh2').value = rh2;
   updateProcessChart();
+}
+
+function setUnitSystem(unit) {
+  if (currentUnitSystem === unit) return;
+  currentUnitSystem = unit;
+  
+  const activeStyle = 'background: var(--amber-bright); color: var(--bg);';
+  const inactiveStyle = 'background: transparent; color: var(--muted);';
+  
+  // Update all toggles
+  ['nav_btn_si', 'mob_btn_si', 'chart_btn_si', 'side_btn_si'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.cssText = unit === 'SI' ? activeStyle : inactiveStyle;
+  });
+  ['nav_btn_ip', 'mob_btn_ip', 'chart_btn_ip', 'side_btn_ip'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.cssText = unit === 'IP' ? activeStyle : inactiveStyle;
+  });
+
+  if (unit === 'SI') {
+    document.getElementById('pressureDisplay').textContent = '101.325 kPa';
+    document.getElementById('heroUnitText').textContent = 'SEA-LEVEL · 101.325 kPa';
+    document.getElementById('procStatus').textContent = 'Per kg dry air';
+  } else {
+    document.getElementById('pressureDisplay').textContent = '14.696 psia';
+    document.getElementById('heroUnitText').textContent = 'SEA-LEVEL · 14.696 psia';
+    document.getElementById('procStatus').textContent = 'Per lb dry air';
+  }
+
+  const inputA = document.getElementById('inputA');
+  const inputB = document.getElementById('inputB');
+  let valA = inputA ? parseFloat(inputA.value) : undefined;
+  let valB = inputB ? parseFloat(inputB.value) : undefined;
+  
+  if (valA !== undefined && valB !== undefined) {
+    if (unit === 'IP') {
+      valA = convertToIP(currentMode, 'a', valA);
+      valB = convertToIP(currentMode, 'b', valB);
+    } else {
+      const cfg = modeConfig[currentMode];
+      if (cfg.a.SI === '°C') valA = (valA - 32) / 1.8;
+      else if (cfg.a.SI === 'kg/kg') valA = valA / 7000;
+      else if (cfg.a.SI === 'kJ/kg') valA = valA * 2.326;
+      
+      if (cfg.b.SI === '°C') valB = (valB - 32) / 1.8;
+      else if (cfg.b.SI === 'kg/kg') valB = valB / 7000;
+      else if (cfg.b.SI === 'kJ/kg') valB = valB * 2.326;
+    }
+    renderInputFields(valA.toFixed(2), valB.toFixed(2));
+  } else {
+    renderInputFields();
+  }
+  updateFromInputs();
+
+  document.getElementById('lbl_p_dbt1').innerText = 'DBT (' + (unit === 'SI' ? '°C' : '°F') + ')';
+  document.getElementById('lbl_p_dbt2').innerText = 'DBT (' + (unit === 'SI' ? '°C' : '°F') + ')';
+
+  const dbt1El = document.getElementById('p_dbt1');
+  const dbt2El = document.getElementById('p_dbt2');
+  if (dbt1El && dbt2El) {
+    let v1 = parseFloat(dbt1El.value);
+    let v2 = parseFloat(dbt2El.value);
+    if (isFinite(v1) && isFinite(v2)) {
+      if (unit === 'IP') {
+        v1 = (v1 * 1.8 + 32).toFixed(1);
+        v2 = (v2 * 1.8 + 32).toFixed(1);
+      } else {
+        v1 = ((v1 - 32) / 1.8).toFixed(1);
+        v2 = ((v2 - 32) / 1.8).toFixed(1);
+      }
+      dbt1El.value = v1;
+      dbt2El.value = v2;
+    }
+  }
+  updateProcessChart();
+
+  const activeFilter = document.querySelector('.tab-btn.active')?.dataset.filter || 'all';
+  renderProblems(activeFilter);
+  
+  showToast('Switched to ' + (unit === 'SI' ? 'SI Units' : 'English (IP) Units'), 'info');
 }
 
 const problems=[
@@ -796,7 +1086,33 @@ function renderProblems(filter){
   const filtered=filter==='all'?problems:problems.filter(p=>p.difficulty===filter);
   list.innerHTML=filtered.map(p=>{
     const diffClass='diff-'+p.difficulty;
-    return '<div class="card p-6 flex flex-col" data-difficulty="'+p.difficulty+'"><div class="flex items-start justify-between mb-3 gap-3"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="difficulty-badge '+diffClass+'">'+p.difficulty+'</span><span class="text-xs font-mono" style="color:var(--muted)">Problem #'+p.id+'</span></div><h4 class="font-display text-xl font-bold mb-1">'+p.title+'</h4></div></div><p class="text-sm mb-4">'+p.statement+'</p><div class="bg-black/30 rounded-lg p-3 mb-4 text-xs font-mono" style="border:1px solid var(--border)"><span style="color:var(--muted)">GIVENS: </span><span style="color:var(--amber-bright)">'+Object.entries(p.givens).map(e=>e[0]+'='+e[1]).join(', ')+'</span></div><div class="space-y-3 mb-4">'+p.inputs.map(inp=>'<div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+inp.label+(inp.unit?' ('+inp.unit+')':'')+'</label><div class="flex gap-2"><input type="'+(inp.type||'number')+'" id="ans-'+p.id+'-'+inp.key+'" class="input-field" placeholder="Your answer" '+(inp.type!=='text'?'step="any"':'')+'><button class="btn btn-primary text-xs whitespace-nowrap" onclick="checkAnswer('+p.id+',\''+inp.key+'\','+inp.tolerance+')"><i class="fa-solid fa-check"></i> Check</button></div><div id="feedback-'+p.id+'-'+inp.key+'" class="text-xs mt-2"></div></div>').join('')+'</div><div class="flex gap-2 mt-auto"><button class="btn btn-ghost text-xs flex-1 justify-center" onclick="loadProblemToChart('+p.id+')"><i class="fa-solid fa-arrow-up-right-from-square"></i> Load to Chart</button><button class="btn btn-ghost text-xs flex-1 justify-center" onclick="toggleSolution('+p.id+')"><i class="fa-solid fa-lightbulb"></i> Show Solution</button></div><div id="solution-'+p.id+'" class="hidden mt-4 pt-4 border-t" style="border-color:var(--border)"><div class="text-xs uppercase tracking-wider mb-2" style="color:var(--amber-bright)">Step-by-step Solution</div><pre class="text-xs font-mono whitespace-pre-wrap" style="color:var(--text);line-height:1.6">'+p.solution+'</pre></div></div>';
+    
+    let givensText = Object.entries(p.givens).map(e => {
+      let key = e[0];
+      let val = e[1];
+      let unit = '';
+      if (key === 'DBT' || key === 'WBT' || key === 'DPT') unit = '°C';
+      if (key === 'RH') unit = '%';
+      if (key === 'W') unit = 'kg/kg';
+      if (key === 'h') unit = 'kJ/kg';
+      
+      if (currentUnitSystem === 'IP') {
+        if (unit === '°C') val = (val * 1.8 + 32).toFixed(1);
+        if (unit === 'kg/kg') { val = (val * 7000).toFixed(1); unit = 'gr/lb'; }
+        if (unit === 'kJ/kg') { val = (val / 2.326).toFixed(1); unit = 'Btu/lb'; }
+      }
+      return key + '=' + val + unit;
+    }).join(', ');
+
+    let inpUnit = p.inputs[0].unit;
+    if (currentUnitSystem === 'IP') {
+      if (inpUnit === '°C') inpUnit = '°F';
+      if (inpUnit === 'kg/kg') inpUnit = 'gr/lb';
+      if (inpUnit === 'kJ/kg') inpUnit = 'Btu/lb';
+      if (inpUnit === 'm³/kg') inpUnit = 'ft³/lb';
+    }
+
+    return '<div class="card p-6 flex flex-col" data-difficulty="'+p.difficulty+'"><div class="flex items-start justify-between mb-3 gap-3"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="difficulty-badge '+diffClass+'">'+p.difficulty+'</span><span class="text-xs font-mono" style="color:var(--muted)">Problem #'+p.id+'</span></div><h4 class="font-display text-xl font-bold mb-1">'+p.title+'</h4></div></div><p class="text-sm mb-4">'+p.statement+'</p><div class="bg-black/30 rounded-lg p-3 mb-4 text-xs font-mono" style="border:1px solid var(--border)"><span style="color:var(--muted)">GIVENS: </span><span style="color:var(--amber-bright)">'+givensText+'</span></div><div class="space-y-3 mb-4">'+p.inputs.map(inp=>'<div><label class="text-xs uppercase tracking-wider block mb-1" style="color:var(--muted)">'+inp.label+(inpUnit?' ('+inpUnit+')':'')+'</label><div class="flex gap-2"><input type="'+(inp.type||'number')+'" id="ans-'+p.id+'-'+inp.key+'" class="input-field" placeholder="Your answer" '+(inp.type!=='text'?'step="any"':'')+'><button class="btn btn-primary text-xs whitespace-nowrap" onclick="checkAnswer('+p.id+',\''+inp.key+'\','+inp.tolerance+')"><i class="fa-solid fa-check"></i> Check</button></div><div id="feedback-'+p.id+'-'+inp.key+'" class="text-xs mt-2"></div></div>').join('')+'</div><div class="flex gap-2 mt-auto"><button class="btn btn-ghost text-xs flex-1 justify-center" onclick="loadProblemToChart('+p.id+')"><i class="fa-solid fa-arrow-up-right-from-square"></i> Load to Chart</button><button class="btn btn-ghost text-xs flex-1 justify-center" onclick="toggleSolution('+p.id+')"><i class="fa-solid fa-lightbulb"></i> Show Solution</button></div><div id="solution-'+p.id+'" class="hidden mt-4 pt-4 border-t" style="border-color:var(--border)"><div class="text-xs uppercase tracking-wider mb-2" style="color:var(--amber-bright)">Step-by-step Solution</div><pre class="text-xs font-mono whitespace-pre-wrap" style="color:var(--text);line-height:1.6">'+p.solution+'</pre></div></div>';
   }).join('');
 }
 
@@ -813,19 +1129,74 @@ function checkAnswer(problemId,key,tolerance){
   else if(key==='DBTm'){correctAns=(1*10+2*30)/3}
   else if(key==='answer'){const lower=userAns.toLowerCase();if(lower==='yes'||lower==='y'){feedbackEl.innerHTML='<span style="color:var(--green)"><i class="fa-solid fa-circle-check"></i> Correct! 22°C/50% RH is inside the winter comfort zone.</span>'}else{feedbackEl.innerHTML='<span style="color:var(--danger)"><i class="fa-solid fa-circle-xmark"></i> Not quite. Check the comfort zone criteria again.</span>'}return}
   else{correctAns=givenState[key]}
-  const userVal=parseFloat(userAns);
+
+  let userVal=parseFloat(userAns);
   if(!isFinite(userVal)){feedbackEl.innerHTML='<span style="color:var(--danger)"><i class="fa-solid fa-circle-exclamation"></i> Please enter a valid number.</span>';return}
-  const diff=Math.abs(userVal-correctAns);const pctErr=Math.abs(diff/correctAns*100);
-  if(diff<=tolerance){feedbackEl.innerHTML='<span style="color:var(--green)"><i class="fa-solid fa-circle-check"></i> Correct! Accepted answer: '+correctAns.toFixed(3)+' '+(input.unit||'')+' (within ±'+tolerance+' '+(input.unit||'')+').</span>';showToast('Problem solved correctly!','success')}
-  else if(pctErr<10){feedbackEl.innerHTML='<span style="color:var(--amber-bright)"><i class="fa-solid fa-circle-exclamation"></i> Close! Your answer: '+userVal+', expected ≈ '+correctAns.toFixed(3)+' '+(input.unit||'')+'. Check your calculations.</span>'}
-  else{feedbackEl.innerHTML='<span style="color:var(--danger)"><i class="fa-solid fa-circle-xmark"></i> Not quite. Expected ≈ '+correctAns.toFixed(3)+' '+(input.unit||'')+'. Try loading the givens into the chart to verify.</span>'}
+
+  let displayCorrectAns = correctAns;
+  let displayTolerance = tolerance;
+  let displayUnit = input.unit;
+
+  if (currentUnitSystem === 'IP') {
+    if (key === 'DBT' || key === 'DPT' || key === 'WBT' || key === 'DBT2' || key === 'DBTm') {
+      userVal = (userVal - 32) / 1.8;
+      displayCorrectAns = correctAns * 1.8 + 32;
+      displayTolerance = tolerance * 1.8;
+      displayUnit = '°F';
+    } else if (key === 'W') {
+      userVal = userVal / 7000;
+      displayCorrectAns = correctAns * 7000;
+      displayTolerance = tolerance * 7000;
+      displayUnit = 'gr/lb';
+    } else if (key === 'h') {
+      userVal = userVal * 2.326;
+      displayCorrectAns = correctAns / 2.326;
+      displayTolerance = tolerance / 2.326;
+      displayUnit = 'Btu/lb';
+    } else if (key === 'v') {
+      userVal = userVal / 16.018;
+      displayCorrectAns = correctAns * 16.018;
+      displayTolerance = tolerance * 16.018;
+      displayUnit = 'ft³/lb';
+    } else if (key === 'dW') {
+      userVal = userVal / 7000;
+      displayCorrectAns = correctAns * 7000;
+      displayTolerance = tolerance * 7000;
+      displayUnit = 'gr/lb';
+    }
+  }
+
+  const diff = Math.abs(userVal - correctAns);
+  const pctErr = Math.abs(diff / correctAns * 100);
+
+  if (diff <= tolerance) {
+    feedbackEl.innerHTML='<span style="color:var(--green)"><i class="fa-solid fa-circle-check"></i> Correct! Accepted answer: '+displayCorrectAns.toFixed(3)+' '+displayUnit+' (within ±'+displayTolerance.toFixed(3)+' '+displayUnit+').</span>';
+    showToast('Problem solved correctly!','success');
+  } else if (pctErr < 10) {
+    feedbackEl.innerHTML='<span style="color:var(--amber-bright)"><i class="fa-solid fa-circle-exclamation"></i> Close! Your answer: '+userAns+', expected ≈ '+displayCorrectAns.toFixed(3)+' '+displayUnit+'. Check your calculations.</span>';
+  } else {
+    feedbackEl.innerHTML='<span style="color:var(--danger)"><i class="fa-solid fa-circle-xmark"></i> Not quite. Expected ≈ '+displayCorrectAns.toFixed(3)+' '+displayUnit+'. Try loading the givens into the chart to verify.</span>';
+  }
 }
 
 function loadProblemToChart(problemId){
   const problem=problems.find(p=>p.id===problemId);
-  document.getElementById('inputMode').value=problem.loadMode;currentMode=problem.loadMode;renderInputFields();
-  document.getElementById('inputA').value=problem.givens.DBT;
-  document.getElementById('inputB').value=problem.givens.RH||problem.givens.WBT;
+  document.getElementById('inputMode').value=problem.loadMode;
+  currentMode=problem.loadMode;
+  
+  let valA = problem.givens.DBT;
+  let valB = problem.givens.RH || problem.givens.WBT;
+  
+  if (currentUnitSystem === 'IP') {
+    valA = convertToIP(currentMode, 'a', valA);
+    if (problem.loadMode === 'DBT_RH') {
+      // RH doesn't change
+    } else if (problem.loadMode === 'DBT_WBT') {
+      valB = (valB * 1.8 + 32);
+    }
+  }
+  
+  renderInputFields(valA.toFixed(2), valB.toFixed(2));
   updateFromInputs();
   document.getElementById('chart').scrollIntoView({behavior:'smooth'});
   showToast('Problem '+problem.id+' givens loaded into chart','info');
@@ -844,8 +1215,9 @@ function showToast(msg,type){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  renderPropertiesGrid();renderProblems();renderInputFields();setupChartInteraction();updateFromInputs();drawTutorialChart();drawHeroChart();
-  updateProcessChart();
+  setUnitSystem('SI'); // Initialize as SI
+  renderPropertiesGrid();renderProblems();setupChartInteraction();
+  drawTutorialChart();drawHeroChart();
   
   ['p_dbt1','p_rh1','p_dbt2','p_rh2'].forEach(id => {
     document.getElementById(id).addEventListener('input', updateProcessChart);
@@ -853,10 +1225,26 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   document.getElementById('inputMode').addEventListener('change',(e)=>{currentMode=e.target.value;renderInputFields();updateFromInputs()});
   document.getElementById('resetBtn').addEventListener('click',()=>{renderInputFields();updateFromInputs();showToast('Inputs reset to defaults','info')});
-  document.getElementById('randomBtn').addEventListener('click',()=>{const dbt=Math.round(Math.random()*40+5);const rh=Math.round(Math.random()*90+5);document.getElementById('inputMode').value='DBT_RH';currentMode='DBT_RH';renderInputFields();document.getElementById('inputA').value=dbt;document.getElementById('inputB').value=rh;updateFromInputs();showToast('Random state: '+dbt+'°C, '+rh+'% RH','info')});
-  document.querySelectorAll('.preset-btn').forEach(btn=>{btn.addEventListener('click',()=>{const dbt=parseFloat(btn.dataset.dbt);if(btn.dataset.rh){document.getElementById('inputMode').value='DBT_RH';currentMode='DBT_RH';renderInputFields();document.getElementById('inputA').value=dbt;document.getElementById('inputB').value=btn.dataset.rh}else if(btn.dataset.wbt){document.getElementById('inputMode').value='DBT_WBT';currentMode='DBT_WBT';renderInputFields();document.getElementById('inputA').value=dbt;document.getElementById('inputB').value=btn.dataset.wbt}updateFromInputs()})});
+  document.getElementById('randomBtn').addEventListener('click',()=>{const dbt=Math.round(Math.random()*40+5);const rh=Math.round(Math.random()*90+5);document.getElementById('inputMode').value='DBT_RH';currentMode='DBT_RH';
+    let finalDbt = dbt;
+    if (currentUnitSystem === 'IP') finalDbt = (dbt * 1.8 + 32);
+    renderInputFields(finalDbt.toFixed(2), rh);
+    updateFromInputs();showToast('Random state generated','info')});
+  document.querySelectorAll('.preset-btn').forEach(btn=>{btn.addEventListener('click',()=>{
+    const dbt=parseFloat(btn.dataset.dbt);
+    if(btn.dataset.rh){document.getElementById('inputMode').value='DBT_RH';currentMode='DBT_RH';
+      let finalDbt = dbt;
+      if (currentUnitSystem === 'IP') finalDbt = (dbt * 1.8 + 32);
+      renderInputFields(finalDbt.toFixed(2), btn.dataset.rh);
+    }else if(btn.dataset.wbt){document.getElementById('inputMode').value='DBT_WBT';currentMode='DBT_WBT';
+      let finalDbt = dbt, finalWbt = parseFloat(btn.dataset.wbt);
+      if (currentUnitSystem === 'IP') { finalDbt = (dbt * 1.8 + 32); finalWbt = (finalWbt * 1.8 + 32); }
+      renderInputFields(finalDbt.toFixed(2), finalWbt.toFixed(2));
+    }
+    updateFromInputs();
+  })});
   document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderProblems(btn.dataset.filter)})});
-  let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(currentState)drawChart(document.getElementById('psychChart'),currentState);drawTutorialChart();updateProcessChart()},150)});
+  let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(currentState)drawChart(document.getElementById('psychChart'),currentState,{unitSystem: currentUnitSystem});drawTutorialChart();updateProcessChart()},150)});
   const observer=new IntersectionObserver((entries)=>{entries.forEach(entry=>{if(entry.isIntersecting)entry.target.classList.add('visible')})},{threshold:0.1});
   document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
 });
